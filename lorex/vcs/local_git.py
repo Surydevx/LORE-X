@@ -17,7 +17,7 @@ class GitLogIngester:
             session.commit()
 
         # Run git log asynchronously
-        cmd = f"git -C {repo_path} log -n{limit} --stat -p"
+        cmd = f'git -C {repo_path} log -n{limit} --format="commit %H%nAuthorName: %an%nAuthorEmail: %ae%nDate: %aI%n%n%B" --stat -p'
         process = await asyncio.create_subprocess_shell(
             cmd,
             stdout=asyncio.subprocess.PIPE,
@@ -32,18 +32,44 @@ class GitLogIngester:
         commits_raw = log_output.split("commit ")
         
         events = []
+        skip_keywords = ["lint", "typo", "bump", "docs", "format", "ignore", "merge"]
+        
         for c in commits_raw:
             if not c.strip():
                 continue
             
             lines = c.split("\n")
             commit_hash = lines[0].strip()
-            author = "Unknown"
+            author_name = "Unknown"
+            author_email = "Unknown"
+            committed_at = None
             
+            message_lines = []
+            parsing_message = False
             for line in lines:
-                if line.startswith("Author:"):
-                    author = line.replace("Author:", "").strip()
+                if line.startswith("AuthorName:"):
+                    author_name = line.replace("AuthorName:", "").strip()
+                elif line.startswith("AuthorEmail:"):
+                    author_email = line.replace("AuthorEmail:", "").strip()
+                elif line.startswith("Date:"):
+                    date_str = line.replace("Date:", "").strip()
+                    try:
+                        committed_at = datetime.fromisoformat(date_str)
+                    except ValueError:
+                        committed_at = datetime.now(timezone.utc)
+                    parsing_message = True
+                elif parsing_message and line.strip() and not line.startswith("diff "):
+                    message_lines.append(line.strip())
+                elif line.startswith("diff "):
                     break
+                    
+            message = " ".join(message_lines).lower()
+            
+            # Heuristic Filtering
+            if len(message) < 30:
+                continue
+            if any(keyword in message for keyword in skip_keywords):
+                continue
             
             event = EngineeringEvent(
                 id=str(uuid.uuid4()),
@@ -51,7 +77,11 @@ class GitLogIngester:
                 source_type="git_commit",
                 source_id=commit_hash,
                 timestamp=datetime.now(timezone.utc),
-                author=author,
+                author=author_name,
+                commit_hash=commit_hash,
+                author_name=author_name,
+                author_email=author_email,
+                committed_at=committed_at,
                 content="commit " + c
             )
             session.add(event)
@@ -59,20 +89,23 @@ class GitLogIngester:
             
         session.commit()
         
-        # Concurrently process extraction via LLMClient
-        async def extract_and_persist(evt):
-            # simulate async LLM call (if LLMClient was async we'd await it, for now we run it synchronously in thread or assume it is fast)
-            # Since LLMClient generation is sync in our code, we will just call it.
-            # To be truly async we should use asyncio.to_thread if it's blocking.
-            tup = await asyncio.to_thread(self.extractor.extract_from_event, evt)
-            # persist_experience requires session. We will do it synchronously inside the loop to avoid SQLite locking issues
-            return tup
-            
-        tuples = await asyncio.gather(*(extract_and_persist(evt) for evt in events))
+        # Concurrency Throttling via Semaphore
+        sem = asyncio.Semaphore(5)
+        
+        async def throttled_extract(evt):
+            async with sem:
+                tup = await asyncio.to_thread(self.extractor.extract_from_event, evt)
+                return tup, evt
+                
+        results = await asyncio.gather(*(throttled_extract(evt) for evt in events))
         
         extracted_experiences = []
-        for tup in tuples:
+        for tup, evt in results:
             exp = self.extractor.persist_experience(tup, project_id, session)
+            exp.commit_hash = evt.commit_hash
+            exp.author = evt.author_name
+            exp.source = f"Commit {evt.commit_hash[:7]} by {evt.author_name} <{evt.author_email}>"
             extracted_experiences.append(exp)
             
+        session.commit()
         return extracted_experiences

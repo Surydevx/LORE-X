@@ -13,6 +13,11 @@ class OutcomeRequest(BaseModel):
     observed_outcome: str
     observed_conditions: List[str]
 
+class APMAlert(BaseModel):
+    incident_id: str
+    breached_metric: str
+    target_node_id: str
+
 @router.post("")
 def record_outcome(req: OutcomeRequest, session: Session = Depends(get_db)):
     engine = RevisionEngine()
@@ -28,6 +33,29 @@ def record_outcome(req: OutcomeRequest, session: Session = Depends(get_db)):
         
     return {
         "message": "Outcome recorded",
+        "new_experience_id": updated_exp.id,
+        "status": updated_exp.status
+    }
+
+@router.post("/apm-webhook")
+def handle_apm_webhook(alert: APMAlert, session: Session = Depends(get_db)):
+    engine = RevisionEngine()
+    
+    observed_outcome = f"APM Alert {alert.incident_id}: Breached {alert.breached_metric}"
+    conditions = [f"metric_breach={alert.breached_metric}"]
+    
+    try:
+        updated_exp = engine.record_outcome(
+            alert.target_node_id,
+            observed_outcome,
+            conditions,
+            session
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+        
+    return {
+        "message": "APM telemetry degradation handled and experience revised",
         "new_experience_id": updated_exp.id,
         "status": updated_exp.status
     }

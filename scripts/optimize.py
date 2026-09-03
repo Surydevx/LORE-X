@@ -26,37 +26,39 @@ def objective(trial):
     session = get_session()
     try:
         setup_mock_db(session, cases)
-    
-    alpha = trial.suggest_float("alpha", 0.1, 1.0)
-    beta = trial.suggest_float("beta", 0.0, 1.0)
-    gamma = trial.suggest_float("gamma", 0.1, 1.0)
-    delta = trial.suggest_float("delta", 0.1, 1.0)
-    
-    engine = HybridRetrievalEngine(alpha, beta, gamma, delta)
-    
-    rec_acc = 0
-    temp_acc = 0
-    
-    for case in cases:
-        query = case['query']
-        expected = case['expected_recommendation'].lower()
         
-        results = engine.retrieve(query, session, top_k=1)
-        if results:
-            top_exp, score = results[0]
+        alpha = trial.suggest_float("alpha", 0.1, 1.0)
+        beta = trial.suggest_float("beta", 0.0, 1.0)
+        gamma = trial.suggest_float("gamma", 0.1, 1.0)
+        delta = trial.suggest_float("delta", 0.1, 1.0)
+        
+        # We need to explicitly name the module so we don't shadow it with `engine = ...`
+        from lorex.engine.retrieval import HybridRetrievalEngine
+        retrieval_engine = HybridRetrievalEngine(alpha, beta, gamma, delta)
+        
+        rec_acc = 0
+        temp_acc = 0
+        
+        for case in cases:
+            query = case['query']
+            expected = case['expected_recommendation'].lower()
             
-            # Recommendation Accuracy
-            if expected in top_exp.action.lower():
-                rec_acc += 1
+            results = retrieval_engine.retrieve(query, session, top_k=1)
+            if results:
+                top_exp, score = results[0]
                 
-            # Temporal Accuracy (successfully returned VERIFIED, rejected SUPERSEDED)
-            if top_exp.status == "VERIFIED":
-                temp_acc += 1
-                
-    rec_acc_score = rec_acc / len(cases)
-    temp_acc_score = temp_acc / len(cases)
-    
-        # Calculate F1 Score combining Recommendation Accuracy and Temporal Accuracy
+                # Recommendation Accuracy
+                if expected in top_exp.action.lower():
+                    rec_acc += 1
+                    
+                # Temporal Accuracy
+                if top_exp.status == "VERIFIED":
+                    temp_acc += 1
+                    
+        rec_acc_score = rec_acc / len(cases)
+        temp_acc_score = temp_acc / len(cases)
+        
+        # Calculate F1 Score
         if (rec_acc_score + temp_acc_score) == 0:
             f1_score = 0.0
         else:

@@ -31,6 +31,8 @@ def run_query(req: QueryRequest, session: Session = Depends(get_db)):
             "outcome": exp.outcome,
             "status": exp.status,
             "confidence": exp.confidence,
+            "commit_hash": exp.commit_hash,
+            "author": exp.author,
             "score": score,
             "evidence": ev_content
         })

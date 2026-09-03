@@ -1,136 +1,407 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <title>LORE-X Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
-</head>
-<body class="bg-gray-100 text-gray-900 font-sans p-8">
-    <div class="max-w-6xl mx-auto space-y-8">
-        <h1 class="text-4xl font-bold text-gray-800">LORE-X Knowledge Dashboard</h1>
-        
-        <!-- Ask View -->
-        <div class="bg-white p-6 rounded-lg shadow">
-            <h2 class="text-2xl font-semibold mb-4">1. Ask View</h2>
-            <div class="flex gap-4">
-                <input id="query-input" type="text" placeholder="Enter query..." class="flex-grow p-2 border border-gray-300 rounded">
-                <button onclick="runQuery()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Search</button>
-            </div>
-            <div id="query-results" class="mt-4 space-y-4"></div>
-        </div>
-        
-        <!-- Experience Timeline -->
-        <div class="bg-white p-6 rounded-lg shadow">
-            <h2 class="text-2xl font-semibold mb-4">2. Experience Timeline</h2>
-            <div id="timeline" class="space-y-4 border-l-4 border-blue-200 pl-4">
-                <!-- Populated by JS -->
-            </div>
-        </div>
-        
-        <!-- Knowledge Graph -->
-        <div class="bg-white p-6 rounded-lg shadow">
-            <h2 class="text-2xl font-semibold mb-4">3. Knowledge Graph</h2>
-            <div id="graph-container" class="mermaid">
-                <!-- Mermaid graph will be injected here -->
-            </div>
-        </div>
-        
-        <!-- Revision View -->
-        <div class="bg-white p-6 rounded-lg shadow">
-            <h2 class="text-2xl font-semibold mb-4">4. Revision View</h2>
-            <div class="grid grid-cols-2 gap-4">
-                <div class="p-4 border rounded bg-green-50">
-                    <h3 class="font-bold text-green-800">Historical Baseline</h3>
-                    <p class="text-sm mt-2" id="baseline-details">Select an item above</p>
-                </div>
-                <div class="p-4 border rounded bg-red-50">
-                    <h3 class="font-bold text-red-800">Contradicted Observation</h3>
-                    <p class="text-sm mt-2" id="revision-details">Select an item above</p>
-                </div>
-            </div>
-        </div>
-    </div>
-    
     <script>
-        mermaid.initialize({ startOnLoad: false });
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                }
+            }
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass {
+                @apply bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl;
+            }
+        }
+        .view-section { display: none; }
+        .view-section.active { display: block; }
+    </style>
+    <style>
+        @keyframes ambientGlow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        body {
+            background: radial-gradient(circle at center, rgba(16, 185, 129, 0.03) 0%, #111 40%, #000 100%);
+            background-size: 200% 200%;
+            animation: ambientGlow 20s infinite ease-in-out;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in-up {
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="bg-black text-gray-300 font-sans antialiased h-screen flex overflow-hidden">
+    <canvas id="waveCanvas" class="fixed top-0 left-0 w-full h-full -z-10 opacity-40"></canvas>
+
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 bg-black/30 backdrop-blur-2xl border-r border-white/5 flex flex-col z-10 relative">
+        <div class="p-6">
+            <h1 class="text-3xl font-extrabold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-lime-500">
+                LORE-X
+            </h1>
+            <p class="text-xs text-gray-500 mt-1 uppercase tracking-widest font-mono">Knowledge Engine</p>
+        </div>
         
+        <nav class="flex-1 px-4 space-y-2 mt-4">
+            <button onclick="switchView('ask-view')" id="nav-ask-view" class="w-full flex items-center px-4 py-3 text-left rounded-lg bg-emerald-500/10 text-emerald-400 font-medium transition-colors border-l-4 border-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.15)]">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                Ask LORE
+            </button>
+            <button onclick="switchView('timeline-view')" id="nav-timeline-view" class="w-full flex items-center px-4 py-3 text-left rounded-lg hover:bg-white/5 text-gray-400 hover:text-gray-200 font-medium transition-colors border-l-4 border-transparent">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Experience Timeline
+            </button>
+            <button onclick="switchView('graph-view')" id="nav-graph-view" class="w-full flex items-center px-4 py-3 text-left rounded-lg hover:bg-white/5 text-gray-400 hover:text-gray-200 font-medium transition-colors border-l-4 border-transparent">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path></svg>
+                Knowledge Graph
+            </button>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-screen overflow-y-auto relative z-0">
+        <!-- Optional absolute background elements for extra glassmorphism depth -->
+        <div class="absolute top-0 right-0 w-96 h-96 bg-emerald-900/20 rounded-full blur-[100px] pointer-events-none"></div>
+        <div class="absolute bottom-0 left-1/4 w-96 h-96 bg-lime-900/10 rounded-full blur-[120px] pointer-events-none"></div>
+        
+        <div class="p-8 max-w-5xl mx-auto w-full relative z-10">
+            
+            <!-- Ask View -->
+            <section id="ask-view" class="view-section active space-y-8 mt-12">
+                <div class="text-center space-y-4">
+                    <h2 class="text-5xl font-extrabold text-white tracking-tight">Consult the Architectural Memory</h2>
+                    <p class="text-gray-400 text-lg">Search historical engineering decisions and their empirical outcomes.</p>
+                </div>
+                
+                <div class="relative max-w-3xl mx-auto">
+                    <input id="query-input" type="text" placeholder="e.g. How do we handle database scaling?" 
+                        class="w-full px-6 py-5 bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl text-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all shadow-2xl"
+                        onkeydown="if(event.key === 'Enter') runQuery()">
+                    <button onclick="runQuery()" class="absolute right-3 top-3 bottom-3 px-8 bg-transparent border border-emerald-500 text-emerald-400 font-bold rounded-xl hover:bg-emerald-500/20 hover:shadow-[0_0_15px_rgba(16,185,129,0.5)] active:scale-95 transition-all uppercase tracking-widest text-sm">
+                        Ask
+                    </button>
+                </div>
+
+                <div id="loading-spinner" class="hidden flex justify-center py-12">
+                    <svg class="animate-spin h-10 w-10 text-emerald-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </div>
+
+                <div id="query-results" class="mt-8 space-y-6"></div>
+            </section>
+
+            <!-- Timeline View -->
+            <section id="timeline-view" class="view-section py-8">
+                <h2 class="text-3xl font-bold text-white mb-8 tracking-tight">Chronological Timeline</h2>
+                <div class="glass rounded-2xl p-10 animate-fade-in-up" style="opacity: 0; animation-delay: 0.1s;">
+                    <div id="timeline" class="space-y-8 border-l-2 border-white/10 pl-8 ml-4">
+                        <!-- Timeline JS -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Graph View -->
+            <section id="graph-view" class="view-section py-8 h-full flex flex-col">
+                <h2 class="text-3xl font-bold text-white mb-6 tracking-tight">Lineage Graph</h2>
+                <div class="glass flex-1 rounded-2xl p-6 overflow-auto flex items-center justify-center min-h-[600px] animate-fade-in-up" style="opacity: 0; animation-delay: 0.2s;">
+                    <div id="graph-container" class="mermaid w-full">
+                        <!-- Mermaid Graph JS -->
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <script>
+        mermaid.initialize({ 
+            startOnLoad: false,
+            theme: 'dark',
+            securityLevel: 'loose'
+        });
+
+        function switchView(viewId) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+            
+            // Reset nav styles
+            const navs = ['ask-view', 'timeline-view', 'graph-view'];
+            navs.forEach(id => {
+                const btn = document.getElementById('nav-' + id);
+                btn.className = "w-full flex items-center px-4 py-3 text-left rounded-lg hover:bg-white/5 text-gray-400 hover:text-gray-200 font-medium transition-colors border-l-4 border-transparent";
+            });
+            
+            // Active nav style
+            const activeBtn = document.getElementById('nav-' + viewId);
+            activeBtn.className = "w-full flex items-center px-4 py-3 text-left rounded-lg bg-emerald-500/10 text-emerald-400 font-medium transition-colors border-l-4 border-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.15)]";
+            
+            if (viewId === 'graph-view' || viewId === 'timeline-view') {
+                loadGraph();
+            }
+        }
+
         async function runQuery() {
             const query = document.getElementById('query-input').value;
             if(!query) return;
-            const res = await fetch('/api/query', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({query: query, top_k: 5})
-            });
-            const data = await res.json();
-            const resultsDiv = document.getElementById('query-results');
-            resultsDiv.innerHTML = '';
             
-            data.results.forEach(exp => {
-                let badgeColor = 'bg-gray-200 text-gray-800';
-                if(exp.status === 'VERIFIED') badgeColor = 'bg-green-200 text-green-800';
-                if(exp.status === 'FAILED') badgeColor = 'bg-red-200 text-red-800';
-                if(exp.status === 'CONDITIONALLY_VALID') badgeColor = 'bg-yellow-200 text-yellow-800';
-                if(exp.status === 'SUPERSEDED') badgeColor = 'bg-orange-200 text-orange-800';
+            document.getElementById('loading-spinner').classList.remove('hidden');
+            document.getElementById('query-results').innerHTML = '';
+            
+            try {
+                const res = await fetch('/api/query', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({query: query, top_k: 5})
+                });
+                const data = await res.json();
                 
-                resultsDiv.innerHTML += `
-                    <div class="p-4 border rounded shadow-sm hover:shadow-md transition">
-                        <div class="flex justify-between items-start">
-                            <h3 class="font-bold text-lg">${exp.action}</h3>
-                            <span class="px-2 py-1 text-xs font-semibold rounded-full ${badgeColor}">${exp.status}</span>
-                        </div>
-                        <p class="text-sm text-gray-600 mt-2"><strong>Problem:</strong> ${exp.problem}</p>
-                        <p class="text-sm text-gray-600"><strong>Conditions:</strong> ${exp.conditions.join(', ')}</p>
-                        <p class="text-sm text-gray-600"><strong>Outcome:</strong> ${exp.outcome}</p>
-                        <p class="text-sm text-gray-600 mt-2"><strong>Evidence:</strong> ${exp.evidence.join(', ')}</p>
-                    </div>
-                `;
-            });
+                const resultsDiv = document.getElementById('query-results');
+                resultsDiv.innerHTML = '';
+                
+                if(!data.results || data.results.length === 0) {
+                    resultsDiv.innerHTML = '<p class="text-gray-500 text-center py-8">No experiences found for this query.</p>';
+                } else {
+                    data.results.forEach((exp, index) => {
+                        let badgeClass = 'border-white/20 text-gray-300 bg-white/5';
+                        if(exp.status === 'VERIFIED') badgeClass = 'border-emerald-500 text-emerald-400 bg-emerald-500/10 shadow-[0_0_10px_rgba(16,185,129,0.2)]';
+                        if(exp.status === 'FAILED') badgeClass = 'border-rose-500 text-rose-400 bg-rose-500/10 shadow-[0_0_10px_rgba(244,63,94,0.2)]';
+                        if(exp.status === 'CONDITIONALLY_VALID') badgeClass = 'border-amber-500 text-amber-400 bg-amber-500/10 shadow-[0_0_10px_rgba(245,158,11,0.2)]';
+                        if(exp.status === 'SUPERSEDED') badgeClass = 'border-red-500/50 text-red-400 bg-red-500/5 shadow-[0_0_10px_rgba(239,68,68,0.1)]';
+                        
+                        resultsDiv.innerHTML += `
+                            <div class="glass p-8 rounded-2xl transition-all duration-300 ease-in-out hover:-translate-y-1 hover:scale-[1.02] hover:shadow-[0_10px_30px_-10px_rgba(16,185,129,0.3)] animate-fade-in-up" style="opacity: 0; animation-delay: ${index * 0.1}s">
+                                <div class="flex justify-between items-start mb-6">
+                                    <div>
+                                        <h3 class="font-bold text-2xl text-white leading-tight tracking-tight mb-2">${exp.action}</h3>
+                                        ${exp.commit_hash ? `<span class="inline-flex items-center px-2.5 py-1 rounded-md bg-white/5 text-[10px] text-gray-400 border border-white/10 font-mono"><svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>git-commit: ${exp.commit_hash.substring(0,7)} by ${exp.author}</span>` : ''}
+                                    </div>
+                                    <span class="px-3 py-1 text-xs font-bold rounded-full border ${badgeClass} tracking-widest uppercase font-mono shrink-0 ml-4">
+                                        ${exp.status}
+                                    </span>
+                                </div>
+                                <div class="space-y-4">
+                                    <p class="text-sm leading-relaxed"><span class="text-gray-500 font-bold uppercase text-xs tracking-widest font-mono">Problem:</span> <span class="text-gray-300 ml-2">${exp.problem}</span></p>
+                                    <p class="text-sm leading-relaxed"><span class="text-gray-500 font-bold uppercase text-xs tracking-widest font-mono">Conditions:</span> <span class="text-gray-300 ml-2">${(exp.conditions || []).join(', ')}</span></p>
+                                    <p class="text-sm leading-relaxed"><span class="text-gray-500 font-bold uppercase text-xs tracking-widest font-mono">Outcome:</span> <span class="text-gray-300 ml-2">${exp.outcome}</span></p>
+                                </div>
+                                <div class="mt-8 pt-5 border-t border-white/10">
+                                    <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-3 font-mono">Provenance</p>
+                                    <div class="flex flex-wrap gap-2">
+                                        ${(exp.evidence || []).map(e => `<span class="inline-flex items-center px-3 py-1.5 rounded-lg bg-black/50 text-xs text-gray-400 border border-white/5 font-mono hover:text-emerald-400 hover:border-emerald-500/30 cursor-pointer transition-colors"><svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>${e}</span>`).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+            } catch(e) {
+                console.error(e);
+            } finally {
+                document.getElementById('loading-spinner').classList.add('hidden');
+            }
         }
 
         async function loadGraph() {
-            const res = await fetch('/api/graph');
-            const data = await res.json();
-            
-            // Build Mermaid
-            let graphDef = 'graph TD;\n';
-            data.nodes.forEach(n => {
-                let style = '';
-                if(n.data.status === 'VERIFIED') style = ':::verified';
-                if(n.data.status === 'SUPERSEDED') style = ':::superseded';
-                if(n.data.status === 'FAILED') style = ':::failed';
-                graphDef += `  ${n.id}["${n.data.action}"]${style};\n`;
-            });
-            data.edges.forEach(e => {
-                graphDef += `  ${e.source} -->|${e.label}| ${e.target};\n`;
-            });
-            graphDef += '\nclassDef verified fill:#dcfce7,stroke:#166534;\n';
-            graphDef += 'classDef superseded fill:#ffedd5,stroke:#c2410c;\n';
-            graphDef += 'classDef failed fill:#fee2e2,stroke:#991b1b;\n';
-            
-            const graphContainer = document.getElementById('graph-container');
-            graphContainer.innerHTML = graphDef;
-            mermaid.init(undefined, graphContainer);
-            
-            // Build Timeline
-            const timelineDiv = document.getElementById('timeline');
-            timelineDiv.innerHTML = '';
-            data.nodes.sort((a,b) => (a.data.valid_from > b.data.valid_from ? 1 : -1)).forEach(n => {
-                timelineDiv.innerHTML += `
-                    <div class="relative">
-                        <div class="absolute -left-6 w-4 h-4 bg-blue-500 rounded-full mt-1"></div>
-                        <div class="pl-4 pb-4">
-                            <span class="text-xs text-gray-500">${n.data.valid_from || 'Unknown date'}</span>
-                            <h4 class="font-bold text-gray-800">${n.data.action}</h4>
-                            <p class="text-sm text-gray-600">Status: ${n.data.status}</p>
+            try {
+                const res = await fetch('/api/graph');
+                const data = await res.json();
+                
+                if (!data.nodes || data.nodes.length === 0) {
+                    const container = document.getElementById('timeline');
+                    container.innerHTML = `
+                        <div class="flex flex-col items-center justify-center h-full min-h-[400px] text-center space-y-4 animate-fade-in-up">
+                            <div class="text-emerald-500/40 mb-2">
+                                <svg class="w-16 h-16 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                </svg>
+                            </div>
+                            <h3 class="text-xl font-medium text-gray-200">Memory Graph is Empty</h3>
+                            <p class="text-gray-500 max-w-sm">No architectural decisions found. Have you made a commit yet?</p>
+                            <div class="mt-4 p-4 bg-black/40 border border-white/5 rounded-lg text-left">
+                                <p class="text-sm text-gray-400 mb-2">Initialize ingestion from your terminal:</p>
+                                <code class="text-emerald-400 font-mono text-sm">uv run lorex ingest .</code>
+                            </div>
                         </div>
-                    </div>
-                `;
-            });
+                    `;
+                    document.getElementById('graph-container').innerHTML = '';
+                    return;
+                }
+                
+                // Build Mermaid
+                let graphDef = 'graph TD;\n';
+                data.nodes.forEach(n => {
+                    let style = '';
+                    if(n.data.status === 'VERIFIED') style = ':::verified';
+                    if(n.data.status === 'SUPERSEDED') style = ':::superseded';
+                    if(n.data.status === 'FAILED') style = ':::failed';
+                    if(n.data.status === 'CONDITIONALLY_VALID') style = ':::cond';
+                    
+                    // Sanitize text for mermaid
+                    let actionText = n.data.action.replace(/"/g, "'").substring(0, 50) + "...";
+                    graphDef += `  ${n.id}["${actionText}"]${style};\n`;
+                });
+                data.edges.forEach(e => {
+                    graphDef += `  ${e.source} -->|${e.label}| ${e.target};\n`;
+                });
+                
+                // True dark neon theme colors for mermaid classes
+                graphDef += '\nclassDef verified fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#a7f3d0;\n';
+                graphDef += 'classDef superseded fill:#4c0519,stroke:#f43f5e,stroke-width:1px,color:#fecdd3;\n';
+                graphDef += 'classDef failed fill:#7f1d1d,stroke:#ef4444,stroke-width:2px,color:#fca5a5;\n';
+                graphDef += 'classDef cond fill:#78350f,stroke:#f59e0b,stroke-width:2px,color:#fde68a;\n';
+                
+                const graphContainer = document.getElementById('graph-container');
+                
+                // We must reset the container before rendering again in mermaid
+                graphContainer.removeAttribute('data-processed');
+                graphContainer.innerHTML = graphDef;
+                mermaid.init(undefined, graphContainer);
+                
+                // Build Timeline
+                const timelineDiv = document.getElementById('timeline');
+                timelineDiv.innerHTML = '';
+                
+                const sortedNodes = data.nodes.sort((a,b) => {
+                    return new Date(a.data.valid_from) - new Date(b.data.valid_from);
+                });
+                
+                sortedNodes.forEach((n, index) => {
+                    const isLatest = index === sortedNodes.length - 1;
+                    const pulseClass = isLatest ? 'animate-pulse' : '';
+                    let dotColor = 'bg-gray-600 shadow-gray-500/50 border-black';
+                    if(n.data.status === 'VERIFIED') dotColor = 'bg-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.8)] border-emerald-900';
+                    if(n.data.status === 'FAILED') dotColor = 'bg-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.8)] border-rose-900';
+                    if(n.data.status === 'CONDITIONALLY_VALID') dotColor = 'bg-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.8)] border-amber-900';
+                    if(n.data.status === 'SUPERSEDED') dotColor = 'bg-red-500 shadow-[0_0_15px_rgba(239,68,68,0.5)] border-red-900';
+
+                    const dateStr = n.data.valid_from ? new Date(n.data.valid_from).toLocaleString() : 'Unknown date';
+                    
+                    timelineDiv.innerHTML += `
+                        <div class="relative group animate-fade-in-up" style="opacity: 0; animation-delay: ${index * 0.1}s">
+                            <div class="absolute -left-[41px] w-4 h-4 rounded-full border-2 z-10 ${dotColor} ${pulseClass}"></div>
+                            <div class="pb-10 group-last:pb-0">
+                                <span class="text-[11px] font-bold text-emerald-400 bg-emerald-400/10 px-2.5 py-1 rounded-md inline-block mb-3 border border-emerald-400/20 font-mono tracking-widest">${dateStr}</span>
+                                <div class="bg-white/5 backdrop-blur-sm p-6 rounded-2xl border border-white/5 group-hover:bg-white/10 group-hover:border-white/10 transition-all shadow-lg">
+                                    <h4 class="font-bold text-white text-lg">${n.data.action}</h4>
+                                    <p class="text-sm text-gray-400 mt-2 font-mono uppercase tracking-widest text-[10px]">Status: <span class="text-gray-200 font-bold ml-1">${n.data.status}</span></p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch(e) {
+                console.error("Failed to load graph/timeline:", e);
+            }
         }
         
-        loadGraph();
+    </script>
+    <script>
+        const canvas = document.getElementById('waveCanvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let particles = [];
+        let mouse = { x: -1000, y: -1000 };
+
+        window.addEventListener('resize', resize);
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+        });
+        window.addEventListener('mouseleave', () => {
+            mouse.x = -1000;
+            mouse.y = -1000;
+        });
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        resize();
+
+        // Expanded grid for wider, parallel coverage
+        const spacing = 45;
+        const rows = 30;
+        const cols = 90; 
+
+        function initParticles() {
+            particles = [];
+            for (let i = 0; i < rows; i++) {
+                for (let j = 0; j < cols; j++) {
+                    particles.push({
+                        x: j * spacing - (cols * spacing) / 2,
+                        z: i * spacing - (rows * spacing) / 2,
+                        ox: j * spacing - (cols * spacing) / 2,
+                        oz: i * spacing - (rows * spacing) / 2
+                    });
+                }
+            }
+        }
+        initParticles();
+
+        let time = 0;
+        function animate() {
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, width, height);
+
+            const centerX = width / 2;
+            const centerY = height / 2 + 100;
+
+            for (let i = 0; i < particles.length; i++) {
+                const p = particles[i];
+
+                // Softened math for sweeping parallel waves
+                const waveY = Math.sin(p.ox * 0.003 + time) * 70 + Math.sin(p.oz * 0.008 + time) * 40;
+
+                const scale = 1000 / (1000 + p.z + 400);
+                const screenX = centerX + p.x * scale;
+                let screenY = centerY + waveY * scale;
+
+                // Mouse Repulsion Physics
+                const dx = screenX - mouse.x;
+                const dy = screenY - mouse.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                const maxDist = 250;
+
+                if (distance < maxDist) {
+                    const force = (maxDist - distance) / maxDist;
+                    screenY -= force * 60; // Push particles up away from mouse
+                    ctx.fillStyle = `rgba(52, 211, 153, ${0.4 + force * 0.6})`; // Brighten on hover
+                } else {
+                    ctx.fillStyle = 'rgba(16, 185, 129, 0.4)'; // Standard emerald
+                }
+
+                if (screenX > 0 && screenX < width && screenY > 0 && screenY < height) {
+                    ctx.beginPath();
+                    ctx.arc(screenX, screenY, 1.8 * scale, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            time += 0.015;
+            requestAnimationFrame(animate);
+        }
+        animate();
     </script>
 </body>
 </html>

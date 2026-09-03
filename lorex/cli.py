@@ -21,11 +21,24 @@ def main():
     ingest_parser.add_argument("repo_path", default=".", nargs="?", help="Path to local repository")
     ingest_parser.add_argument("--limit", type=int, default=5, help="Number of commits")
 
+    # lorex serve
+    serve_parser = subparsers.add_parser("serve", help="Launch the LORE-X web dashboard")
+    serve_parser.add_argument("--port", type=int, default=8000, help="Port to run the server on")
+
     args = parser.parse_args()
 
     if args.command == "init":
         init_db()
         print("Database initialized successfully.")
+        
+        import os
+        if os.path.exists(".git"):
+            hook_path = os.path.join(".git", "hooks", "post-commit")
+            hook_content = """#!/bin/sh\n# Automatically ingest the latest commit into LORE-X\nuv run lorex ingest . --limit 1 > /dev/null 2>&1 &\n"""
+            with open(hook_path, "w") as f:
+                f.write(hook_content)
+            os.chmod(hook_path, 0o755)
+            print("Git post-commit hook successfully initialized and made executable.")
     elif args.command == "query":
         init_db()
         session = get_session()
@@ -47,6 +60,10 @@ def main():
         ingester = GitLogIngester()
         asyncio.run(ingester.ingest_repository(args.repo_path, "p1", session, limit=args.limit))
         print(f"Ingested commits from {args.repo_path}")
+    elif args.command == "serve":
+        import uvicorn
+        print(f"Starting LORE-X Dashboard on port {args.port}...")
+        uvicorn.run("lorex.api.app:app", host="127.0.0.1", port=args.port, reload=True)
     else:
         parser.print_help()
 

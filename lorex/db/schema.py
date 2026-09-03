@@ -25,6 +25,10 @@ class EngineeringEvent(Base):
     source_id: Mapped[str] = mapped_column(String)
     timestamp: Mapped[datetime] = mapped_column(DateTime)
     author: Mapped[str] = mapped_column(String)
+    commit_hash: Mapped[Optional[str]] = mapped_column(String, index=True, nullable=True)
+    author_name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    author_email: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    committed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     content: Mapped[str] = mapped_column(Text)
     
     project: Mapped["Project"] = relationship(back_populates="events")
@@ -44,6 +48,9 @@ class Experience(Base):
     valid_from: Mapped[datetime] = mapped_column(DateTime)
     valid_until: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     superseded_by: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    commit_hash: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    author: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    source: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     
     project: Mapped["Project"] = relationship(back_populates="experiences")
     evidences: Mapped[List["Evidence"]] = relationship(back_populates="experience")

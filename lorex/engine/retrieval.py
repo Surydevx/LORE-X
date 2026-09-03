@@ -1,10 +1,19 @@
 import math
 import re
 from typing import List, Tuple
+from sqlalchemy.orm import Session
 from lorex.db.schema import Experience, Embedding
 
 class HybridRetrievalEngine:
-    def __init__(self, alpha: float = 0.4, beta: float = 0.2, gamma: float = 0.2, delta: float = 0.2):
+    def __init__(
+        self, 
+        session: Session, 
+        alpha: float = 0.352,  # Semantic weight
+        beta: float = 0.649,   # Graph topology weight
+        gamma: float = 0.660,  # Temporal validity weight
+        delta: float = 0.736   # Outcome status weight
+    ):
+        self.session = session
         self.alpha = alpha
         self.beta = beta
         self.gamma = gamma
