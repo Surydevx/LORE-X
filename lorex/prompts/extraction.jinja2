@@ -1,0 +1,20 @@
+You are an expert software engineer analyzing an engineering event (commit, PR, incident, etc.).
+Your task is to extract an architectural or operational "experience" from the text.
+The output MUST strictly conform to the ExperienceTuple JSON schema.
+
+Engineering Event Type: {{ event.source_type }}
+Engineering Event ID: {{ event.source_id }}
+Author: {{ event.author }}
+Timestamp: {{ event.timestamp }}
+
+Content:
+{{ event.content }}
+
+Extract the experience:
+1. Problem: What was the root cause or underlying problem?
+2. Action: What specific technical action or decision was made?
+3. Conditions: Under what operational conditions does this apply? (List of strings)
+4. Evidence: What evidence supports this outcome? (List of strings)
+5. Outcome: What was the result of the action?
+
+Return a valid JSON object matching the ExperienceTuple schema.

@@ -1,0 +1,72 @@
+[
+  {
+    "query": "How should we implement caching for the inference API?",
+    "expected_recommendation": "Redis caching with TTL",
+    "obsolete_recommendation": "In-memory local caching",
+    "ground_truth_evidence_ids": ["ev-redis-1"],
+    "requires_temporal_awareness": true
+  },
+  {
+    "query": "What is our strategy for handling external API rate limits?",
+    "expected_recommendation": "Fixed retry intervals",
+    "obsolete_recommendation": "Exponential backoff",
+    "ground_truth_evidence_ids": ["ev-retry-1"],
+    "requires_temporal_awareness": true
+  },
+  {
+    "query": "How to scale database connections under high load?",
+    "expected_recommendation": "PgBouncer pool with max 500 connections",
+    "obsolete_recommendation": "Direct pooling from application with unlimited max",
+    "ground_truth_evidence_ids": ["ev-db-1"],
+    "requires_temporal_awareness": true
+  },
+  {
+    "query": "Which token validation approach is approved?",
+    "expected_recommendation": "Asynchronous JWKS validation",
+    "obsolete_recommendation": "Synchronous validation per request",
+    "ground_truth_evidence_ids": ["ev-token-1"],
+    "requires_temporal_awareness": false
+  },
+  {
+    "query": "What message broker should we use for real-time analytics?",
+    "expected_recommendation": "Apache Kafka",
+    "obsolete_recommendation": "RabbitMQ",
+    "ground_truth_evidence_ids": ["ev-broker-1"],
+    "requires_temporal_awareness": true
+  },
+  {
+    "query": "How should we deploy the background workers?",
+    "expected_recommendation": "Kubernetes CronJobs",
+    "obsolete_recommendation": "Systemd services on EC2",
+    "ground_truth_evidence_ids": ["ev-deploy-1"],
+    "requires_temporal_awareness": true
+  },
+  {
+    "query": "What is the policy on sensitive data logging?",
+    "expected_recommendation": "Structured masking of PII fields",
+    "obsolete_recommendation": "Disable logging entirely for auth service",
+    "ground_truth_evidence_ids": ["ev-log-1"],
+    "requires_temporal_awareness": true
+  },
+  {
+    "query": "How do we handle state in the UI components?",
+    "expected_recommendation": "Redux Toolkit",
+    "obsolete_recommendation": "Context API globally",
+    "ground_truth_evidence_ids": ["ev-state-1"],
+    "requires_temporal_awareness": true
+  },
+  {
+    "query": "What is the recommended search backend?",
+    "expected_recommendation": "Elasticsearch",
+    "obsolete_recommendation": "Postgres full-text search",
+    "ground_truth_evidence_ids": ["ev-search-1"],
+    "requires_temporal_awareness": false
+  },
+  {
+    "query": "How do we store user sessions?",
+    "expected_recommendation": "Redis session store",
+    "obsolete_recommendation": "JWT exclusively in local storage",
+    "ground_truth_evidence_ids": ["ev-session-1"],
+    "requires_temporal_awareness": true
+  }
+]

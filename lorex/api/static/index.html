@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>LORE-X Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body class="bg-gray-100 text-gray-900 font-sans p-8">
+    <div class="max-w-6xl mx-auto space-y-8">
+        <h1 class="text-4xl font-bold text-gray-800">LORE-X Knowledge Dashboard</h1>
+        
+        <!-- Ask View -->
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h2 class="text-2xl font-semibold mb-4">1. Ask View</h2>
+            <div class="flex gap-4">
+                <input id="query-input" type="text" placeholder="Enter query..." class="flex-grow p-2 border border-gray-300 rounded">
+                <button onclick="runQuery()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Search</button>
+            </div>
+            <div id="query-results" class="mt-4 space-y-4"></div>
+        </div>
+        
+        <!-- Experience Timeline -->
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h2 class="text-2xl font-semibold mb-4">2. Experience Timeline</h2>
+            <div id="timeline" class="space-y-4 border-l-4 border-blue-200 pl-4">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+        
+        <!-- Knowledge Graph -->
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h2 class="text-2xl font-semibold mb-4">3. Knowledge Graph</h2>
+            <div id="graph-container" class="mermaid">
+                <!-- Mermaid graph will be injected here -->
+            </div>
+        </div>
+        
+        <!-- Revision View -->
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h2 class="text-2xl font-semibold mb-4">4. Revision View</h2>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="p-4 border rounded bg-green-50">
+                    <h3 class="font-bold text-green-800">Historical Baseline</h3>
+                    <p class="text-sm mt-2" id="baseline-details">Select an item above</p>
+                </div>
+                <div class="p-4 border rounded bg-red-50">
+                    <h3 class="font-bold text-red-800">Contradicted Observation</h3>
+                    <p class="text-sm mt-2" id="revision-details">Select an item above</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        mermaid.initialize({ startOnLoad: false });
+        
+        async function runQuery() {
+            const query = document.getElementById('query-input').value;
+            if(!query) return;
+            const res = await fetch('/api/query', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({query: query, top_k: 5})
+            });
+            const data = await res.json();
+            const resultsDiv = document.getElementById('query-results');
+            resultsDiv.innerHTML = '';
+            
+            data.results.forEach(exp => {
+                let badgeColor = 'bg-gray-200 text-gray-800';
+                if(exp.status === 'VERIFIED') badgeColor = 'bg-green-200 text-green-800';
+                if(exp.status === 'FAILED') badgeColor = 'bg-red-200 text-red-800';
+                if(exp.status === 'CONDITIONALLY_VALID') badgeColor = 'bg-yellow-200 text-yellow-800';
+                if(exp.status === 'SUPERSEDED') badgeColor = 'bg-orange-200 text-orange-800';
+                
+                resultsDiv.innerHTML += `
+                    <div class="p-4 border rounded shadow-sm hover:shadow-md transition">
+                        <div class="flex justify-between items-start">
+                            <h3 class="font-bold text-lg">${exp.action}</h3>
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full ${badgeColor}">${exp.status}</span>
+                        </div>
+                        <p class="text-sm text-gray-600 mt-2"><strong>Problem:</strong> ${exp.problem}</p>
+                        <p class="text-sm text-gray-600"><strong>Conditions:</strong> ${exp.conditions.join(', ')}</p>
+                        <p class="text-sm text-gray-600"><strong>Outcome:</strong> ${exp.outcome}</p>
+                        <p class="text-sm text-gray-600 mt-2"><strong>Evidence:</strong> ${exp.evidence.join(', ')}</p>
+                    </div>
+                `;
+            });
+        }
+
+        async function loadGraph() {
+            const res = await fetch('/api/graph');
+            const data = await res.json();
+            
+            // Build Mermaid
+            let graphDef = 'graph TD;\n';
+            data.nodes.forEach(n => {
+                let style = '';
+                if(n.data.status === 'VERIFIED') style = ':::verified';
+                if(n.data.status === 'SUPERSEDED') style = ':::superseded';
+                if(n.data.status === 'FAILED') style = ':::failed';
+                graphDef += `  ${n.id}["${n.data.action}"]${style};\n`;
+            });
+            data.edges.forEach(e => {
+                graphDef += `  ${e.source} -->|${e.label}| ${e.target};\n`;
+            });
+            graphDef += '\nclassDef verified fill:#dcfce7,stroke:#166534;\n';
+            graphDef += 'classDef superseded fill:#ffedd5,stroke:#c2410c;\n';
+            graphDef += 'classDef failed fill:#fee2e2,stroke:#991b1b;\n';
+            
+            const graphContainer = document.getElementById('graph-container');
+            graphContainer.innerHTML = graphDef;
+            mermaid.init(undefined, graphContainer);
+            
+            // Build Timeline
+            const timelineDiv = document.getElementById('timeline');
+            timelineDiv.innerHTML = '';
+            data.nodes.sort((a,b) => (a.data.valid_from > b.data.valid_from ? 1 : -1)).forEach(n => {
+                timelineDiv.innerHTML += `
+                    <div class="relative">
+                        <div class="absolute -left-6 w-4 h-4 bg-blue-500 rounded-full mt-1"></div>
+                        <div class="pl-4 pb-4">
+                            <span class="text-xs text-gray-500">${n.data.valid_from || 'Unknown date'}</span>
+                            <h4 class="font-bold text-gray-800">${n.data.action}</h4>
+                            <p class="text-sm text-gray-600">Status: ${n.data.status}</p>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+        
+        loadGraph();
+    </script>
+</body>
+</html>
