@@ -12,33 +12,22 @@ LORE-X solves this by preserving institutional knowledge as a strict $(P, A, C, 
 - **Evidence:** Concrete artifacts (PRs, incident logs) proving the outcome.
 - **Outcome:** The empirical result.
 - **Temporal/State:** The lifecycle (`VERIFIED`, `CONDITIONALLY_VALID`, `FAILED`, `SUPERSEDED`).
-- **Source:** The author/originating event.
+- **Source:** The author/originating event (includes cryptographic Git SHAs and author emails).
 
 By capturing lifecycle and bounding conditions, LORE-X's retrieval engine actively deprecates obsolete decisions and dynamically surfaces solutions grounded entirely in proven empirical evidence.
 
 ## System Architecture
 
 LORE-X operates a robust 4-stage pipeline:
-1. **Asynchronous Ingestion Adapters:** Consumes Git logs, incident posts, or PRs using `asyncio` for non-blocking, massively scalable repository digestion.
+1. **Asynchronous Ingestion Adapters:** Consumes Git logs via a Zero-Touch `post-commit` hook. Uses `asyncio` for non-blocking extraction, features heuristic commit filtering (dropping trivial messages), and enforces API Concurrency Throttling via Semaphores to prevent HTTP 429 limits. Captures exact metadata (Author, Date, SHA checksums).
 2. **Experience Extraction Engine:** Analyzes unstructured text with deterministic LLMs to enforce the `ExperienceTuple` schema. Features full AI Observability (via `litellm`) logging token usage and latency.
-3. **Hybrid Retrieval Engine:** A unified retrieval ranking that factors in:
-   - *Semantic Score:* Cosine distance between query and historical domain problems.
-   - *Temporal Score:* Multiplier penalizing obsolete/superseded records.
-   - *Outcome Score:* Heavy bias toward `VERIFIED` and `CONDITIONALLY_VALID` decisions.
-   - *Graph Score:* Ancestral lineage relationships between linked decisions.
-   *(Note: The weights of this engine are dynamically tuned using Bayesian Optimization via Optuna).*
-4. **Outcome & Revision Engine:** Actively monitors contradictory evidence. If a decision succeeds at 1k TPS but fails at 10k TPS, the Revision Engine updates the historical status to `CONDITIONALLY_VALID` and splits the context.
+3. **Hybrid Retrieval Engine:** A unified retrieval ranking that factors in Semantic, Temporal, Outcome, and Graph lineage scores.
+4. **Outcome & Revision Engine (APM Telemetry Webhooks):** Integrates directly with your observability stack (e.g. Datadog). When a metric breaches, the `/apm-webhook` endpoint autonomously degrades the failing architectural pattern in its memory graph (e.g., from `VERIFIED` to `FAILED`).
 
-## The 5-Phase Differentiating Demo
-Run the LORE-X demo (`python scripts/run_demo.py`) to observe the lifecycle in action:
-1. **Ingestion:** An incident report from the "c&s lab" proves Redis caching reduced API latency by 35% (`VERIFIED`).
-2. **Initial Query:** Developer asks about API latency; the engine retrieves the Redis recommendation with high confidence.
-3. **New Evidence:** A new benchmark proves that at 12,000 concurrent users, the Redis connection pool exhausted.
-4. **Memory Revision:** The `RevisionEngine` captures the contradiction. It bounds the original Redis cache decision, marking it `CONDITIONALLY_VALID` (or `FAILED` for that context) and stamping the temporal invalidation.
-5. **Final Query:** The identical query is issued. LORE-X now down-ranks the blanket Redis recommendation, highlighting the new failure bound and explicitly preventing a blind architectural mistake.
+## The 3D Glassmorphism UI
+LORE-X ships with a sleek, premium dark-mode dashboard (`lorex serve`) featuring a 3D animated dot-wave physics engine, interactive Mermaid.js lineage graphs, and dynamic empty-state handling.
 
 ## Empirical Benchmark Results (Section 17)
-
 The Evaluation Suite (`python scripts/evaluate.py`) tests LORE-X against Baseline LLMs and Standard Vector RAG using 10 deterministic lifecycle questions:
 
 | Metric | Baseline LLM | Standard RAG | LORE-X Hybrid |
@@ -53,23 +42,21 @@ The Evaluation Suite (`python scripts/evaluate.py`) tests LORE-X against Baselin
 
 **1. Environment Setup**
 ```bash
-uv venv
-source .venv/bin/activate
-uv pip install -e ".[test]" optuna litellm aiofiles pytest
+uv sync
 ```
 
 **2. Unified CLI Operations**
-LORE-X ships with a unified CLI `lorex` for easy operation:
+LORE-X ships with a unified CLI `lorex` for easy operation. It securely manages your API Keys and `.gitignore`.
 
 ```bash
-# Initialize database
+# Initialize database, secrets, and Git hook
 lorex init
 
-# Ingest local git history (requires asynchronous git processing)
+# Ingest local git history manually
 lorex ingest . --limit 10
 
-# Query the engine directly
-lorex query "API latency is high"
+# Launch Web Dashboard (3D Glassmorphism UI)
+lorex serve
 ```
 
 **3. Test Suite Execution**
@@ -77,21 +64,10 @@ lorex query "API latency is high"
 pytest tests/
 ```
 
-**4. Run the Lifecycle Demo**
-```bash
-python scripts/run_demo.py
-```
-
-**5. Run Bayesian Optimization**
+**4. Run Bayesian Optimization**
 ```bash
 python scripts/optimize.py
 ```
 
-**6. Launch Web Dashboard & API**
-```bash
-uvicorn lorex.api.app:app --reload
-```
-Navigate to `http://127.0.0.1:8000/dashboard` to view the beautiful dark-mode Ask View, Experience Timeline, and Mermaid.js Knowledge Graph!
-
-**7. Documentation**
+**5. Documentation**
 *Documentation is ingested and hosted via Zensical.*

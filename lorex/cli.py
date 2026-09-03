@@ -1,8 +1,14 @@
 import argparse
 import sys
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
+from getpass import getpass
 from lorex.db.session import init_db, get_session
 from lorex.engine.retrieval import HybridRetrievalEngine
 from lorex.vcs.local_git import GitLogIngester
+from lorex.api.app import app
 
 def main():
     parser = argparse.ArgumentParser(prog="lorex", description="LORE-X CLI")
@@ -28,17 +34,54 @@ def main():
     args = parser.parse_args()
 
     if args.command == "init":
+        if not os.path.exists(".git"):
+            print("Error: Not a git repository. Please run 'git init' first.")
+            sys.exit(1)
+            
+        supported_keys = ["GEMINI_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY"]
+        if not any(os.getenv(k) for k in supported_keys):
+            print("No LLM API keys detected in the environment.")
+            print("Supported providers:")
+            print("1. Gemini")
+            print("2. OpenAI")
+            print("3. Anthropic")
+            choice = input("Select your provider (1/2/3) [default: 1]: ").strip()
+            
+            key_name = "GEMINI_API_KEY"
+            if choice == "2":
+                key_name = "OPENAI_API_KEY"
+            elif choice == "3":
+                key_name = "ANTHROPIC_API_KEY"
+                
+            api_key = getpass(f"Enter your {key_name} (input hidden): ")
+            if api_key.strip():
+                with open(".env", "a") as f:
+                    f.write(f"\n{key_name}={api_key.strip()}\n")
+                print(f"{key_name} saved to .env file.")
+            else:
+                print("Warning: No API key provided. LORE-X may fail during extraction.")
+                
+        gitignore_path = ".gitignore"
+        ignores = ["\n# LORE-X\n", "lorex.db\n", ".env\n"]
+        existing_ignores = []
+        if os.path.exists(gitignore_path):
+            with open(gitignore_path, "r") as f:
+                existing_ignores = f.readlines()
+        
+        with open(gitignore_path, "a") as f:
+            for item in ignores:
+                if item.strip() and not any(item.strip() in line for line in existing_ignores):
+                    f.write(item)
+                    
         init_db()
         print("Database initialized successfully.")
         
-        import os
-        if os.path.exists(".git"):
-            hook_path = os.path.join(".git", "hooks", "post-commit")
-            hook_content = """#!/bin/sh\n# Automatically ingest the latest commit into LORE-X\nuv run lorex ingest . --limit 1 > /dev/null 2>&1 &\n"""
-            with open(hook_path, "w") as f:
-                f.write(hook_content)
-            os.chmod(hook_path, 0o755)
-            print("Git post-commit hook successfully initialized and made executable.")
+        hook_path = os.path.join(".git", "hooks", "post-commit")
+        hook_content = """#!/bin/sh\n# Automatically ingest the latest commit into LORE-X\nuv run lorex ingest . --limit 1 > /dev/null 2>&1 &\n"""
+        with open(hook_path, "w") as f:
+            f.write(hook_content)
+        os.chmod(hook_path, 0o755)
+        print("Git post-commit hook successfully initialized and made executable.")
     elif args.command == "query":
         init_db()
         session = get_session()
@@ -54,6 +97,8 @@ def main():
             exp, score = res
             print(f"- [{exp.status}] {exp.action} (Score: {score:.2f})")
     elif args.command == "ingest":
+        if not any(os.getenv(k) for k in ["GEMINI_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY"]):
+            sys.stderr.write("Warning: No LLM API keys detected. Extraction may fail or fallback to basic parsing.\n")
         import asyncio
         init_db()
         session = get_session()
@@ -63,7 +108,7 @@ def main():
     elif args.command == "serve":
         import uvicorn
         print(f"Starting LORE-X Dashboard on port {args.port}...")
-        uvicorn.run("lorex.api.app:app", host="127.0.0.1", port=args.port, reload=True)
+        uvicorn.run(app, host="127.0.0.1", port=args.port, reload=False)
     else:
         parser.print_help()
 

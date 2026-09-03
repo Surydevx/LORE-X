@@ -20,9 +20,13 @@ def get_graph(session: Session = Depends(get_db)):
             "data": {
                 "problem": exp.problem,
                 "action": exp.action,
+                "conditions": exp.conditions,
                 "outcome": exp.outcome,
                 "status": exp.status,
                 "confidence": exp.confidence,
+                "commit_hash": exp.commit_hash,
+                "author": exp.author,
+                "timestamp": exp.created_at.isoformat() if exp.created_at else None,
                 "valid_from": exp.valid_from.isoformat() if exp.valid_from else None,
                 "valid_until": exp.valid_until.isoformat() if exp.valid_until else None
             }

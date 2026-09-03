@@ -194,22 +194,32 @@
                             <div class="glass p-8 rounded-2xl transition-all duration-300 ease-in-out hover:-translate-y-1 hover:scale-[1.02] hover:shadow-[0_10px_30px_-10px_rgba(16,185,129,0.3)] animate-fade-in-up" style="opacity: 0; animation-delay: ${index * 0.1}s">
                                 <div class="flex justify-between items-start mb-6">
                                     <div>
-                                        <h3 class="font-bold text-2xl text-white leading-tight tracking-tight mb-2">${exp.action}</h3>
-                                        ${exp.commit_hash ? `<span class="inline-flex items-center px-2.5 py-1 rounded-md bg-white/5 text-[10px] text-gray-400 border border-white/10 font-mono"><svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>git-commit: ${exp.commit_hash.substring(0,7)} by ${exp.author}</span>` : ''}
+                                        <h3 class="font-bold text-2xl text-white leading-tight tracking-tight mb-3">${exp.action}</h3>
+                                        <div class="flex items-center gap-3">
+                                            ${exp.commit_hash ? `<span class="inline-flex items-center px-2.5 py-1 rounded-md bg-white/5 text-[10px] text-gray-400 border border-white/10 font-mono"><svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>git: ${exp.commit_hash.substring(0,7)}</span>` : ''}
+                                            ${exp.author ? `<span class="text-[11px] text-gray-500 font-medium">${exp.author}</span>` : ''}
+                                            ${exp.timestamp ? `<span class="text-[11px] text-gray-600 font-mono">${new Date(exp.timestamp).toLocaleDateString()}</span>` : ''}
+                                        </div>
                                     </div>
                                     <span class="px-3 py-1 text-xs font-bold rounded-full border ${badgeClass} tracking-widest uppercase font-mono shrink-0 ml-4">
                                         ${exp.status}
                                     </span>
                                 </div>
-                                <div class="space-y-4">
-                                    <p class="text-sm leading-relaxed"><span class="text-gray-500 font-bold uppercase text-xs tracking-widest font-mono">Problem:</span> <span class="text-gray-300 ml-2">${exp.problem}</span></p>
-                                    <p class="text-sm leading-relaxed"><span class="text-gray-500 font-bold uppercase text-xs tracking-widest font-mono">Conditions:</span> <span class="text-gray-300 ml-2">${(exp.conditions || []).join(', ')}</span></p>
-                                    <p class="text-sm leading-relaxed"><span class="text-gray-500 font-bold uppercase text-xs tracking-widest font-mono">Outcome:</span> <span class="text-gray-300 ml-2">${exp.outcome}</span></p>
+                                <div class="mb-5 bg-black/50 border border-white/5 p-4 rounded-xl shadow-inner">
+                                    <span class="block text-xs font-bold text-gray-500 tracking-widest uppercase mb-2 font-mono">Problem</span>
+                                    <p class="text-sm text-gray-300 leading-relaxed">${exp.problem}</p>
                                 </div>
-                                <div class="mt-8 pt-5 border-t border-white/10">
-                                    <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-3 font-mono">Provenance</p>
-                                    <div class="flex flex-wrap gap-2">
-                                        ${(exp.evidence || []).map(e => `<span class="inline-flex items-center px-3 py-1.5 rounded-lg bg-black/50 text-xs text-gray-400 border border-white/5 font-mono hover:text-emerald-400 hover:border-emerald-500/30 cursor-pointer transition-colors"><svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>${e}</span>`).join('')}
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="bg-white/5 border border-white/5 p-4 rounded-xl">
+                                        <span class="block text-xs font-bold text-gray-500 tracking-widest uppercase mb-2 font-mono">Conditions / Scope</span>
+                                        <p class="text-sm text-gray-300 leading-relaxed">${(exp.conditions || []).join(', ')}</p>
+                                    </div>
+                                    <div class="bg-white/5 border border-white/5 p-4 rounded-xl">
+                                        <span class="block text-xs font-bold text-gray-500 tracking-widest uppercase mb-2 font-mono">Outcome & Evidence</span>
+                                        <p class="text-sm text-gray-300 leading-relaxed">${exp.outcome}</p>
+                                        <div class="mt-3 flex flex-wrap gap-2">
+                                            ${(exp.evidence || []).map(e => `<span class="inline-flex items-center px-2 py-1 rounded bg-black/50 text-[10px] text-gray-400 border border-white/5 font-mono hover:text-emerald-400 hover:border-emerald-500/30 transition-colors cursor-pointer"><svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>${e}</span>`).join('')}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -240,8 +250,8 @@
                             <h3 class="text-xl font-medium text-gray-200">Memory Graph is Empty</h3>
                             <p class="text-gray-500 max-w-sm">No architectural decisions found. Have you made a commit yet?</p>
                             <div class="mt-4 p-4 bg-black/40 border border-white/5 rounded-lg text-left">
-                                <p class="text-sm text-gray-400 mb-2">Initialize ingestion from your terminal:</p>
-                                <code class="text-emerald-400 font-mono text-sm">uv run lorex ingest .</code>
+                                <p class="text-sm text-gray-400 mb-2">Backfill existing repository history:</p>
+                                <code class="text-emerald-400 font-mono text-sm">lorex ingest .</code>
                             </div>
                         </div>
                     `;
@@ -251,7 +261,9 @@
                 
                 // Build Mermaid
                 let graphDef = 'graph TD;\n';
+                window.graphNodes = {};
                 data.nodes.forEach(n => {
+                    window.graphNodes[n.id] = n;
                     let style = '';
                     if(n.data.status === 'VERIFIED') style = ':::verified';
                     if(n.data.status === 'SUPERSEDED') style = ':::superseded';
@@ -259,8 +271,9 @@
                     if(n.data.status === 'CONDITIONALLY_VALID') style = ':::cond';
                     
                     // Sanitize text for mermaid
-                    let actionText = n.data.action.replace(/"/g, "'").substring(0, 50) + "...";
-                    graphDef += `  ${n.id}["${actionText}"]${style};\n`;
+                    let actionText = n.data.action.replace(/"/g, "'").substring(0, 30) + "...";
+                    graphDef += `  ${n.id}["[${actionText}]"]${style};\n`;
+                    graphDef += `  click ${n.id} "javascript:showNodeDetails('${n.id}')" "View Details";\n`;
                 });
                 data.edges.forEach(e => {
                     graphDef += `  ${e.source} -->|${e.label}| ${e.target};\n`;
@@ -304,8 +317,32 @@
                             <div class="pb-10 group-last:pb-0">
                                 <span class="text-[11px] font-bold text-emerald-400 bg-emerald-400/10 px-2.5 py-1 rounded-md inline-block mb-3 border border-emerald-400/20 font-mono tracking-widest">${dateStr}</span>
                                 <div class="bg-white/5 backdrop-blur-sm p-6 rounded-2xl border border-white/5 group-hover:bg-white/10 group-hover:border-white/10 transition-all shadow-lg">
-                                    <h4 class="font-bold text-white text-lg">${n.data.action}</h4>
-                                    <p class="text-sm text-gray-400 mt-2 font-mono uppercase tracking-widest text-[10px]">Status: <span class="text-gray-200 font-bold ml-1">${n.data.status}</span></p>
+                                    <div class="flex justify-between items-start mb-4">
+                                        <div>
+                                            <h4 class="font-bold text-white text-lg leading-tight mb-2">${n.data.action}</h4>
+                                            <div class="flex items-center gap-3">
+                                                ${n.data.commit_hash ? `<span class="inline-flex items-center px-2 py-0.5 rounded bg-white/5 text-[9px] text-gray-400 border border-white/10 font-mono"><svg class="w-2.5 h-2.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>git: ${n.data.commit_hash.substring(0,7)}</span>` : ''}
+                                                ${n.data.author ? `<span class="text-[10px] text-gray-500 font-medium">${n.data.author}</span>` : ''}
+                                            </div>
+                                        </div>
+                                        <span class="px-2 py-0.5 text-[9px] font-bold rounded-full border tracking-widest uppercase font-mono shrink-0 ml-3 ${n.data.status === 'VERIFIED' ? 'text-emerald-400 border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] bg-emerald-500/10' : n.data.status === 'SUPERSEDED' ? 'text-red-400 border-red-500/50 shadow-[0_0_8px_rgba(239,68,68,0.3)] bg-red-500/10' : 'text-gray-300 border-white/20'}">
+                                            ${n.data.status}
+                                        </span>
+                                    </div>
+                                    <div class="mb-4 bg-black/50 border border-white/5 p-3 rounded-lg shadow-inner">
+                                        <span class="block text-[9px] font-bold text-gray-500 tracking-widest uppercase mb-1 font-mono">Problem</span>
+                                        <p class="text-xs text-gray-300 leading-relaxed">${n.data.problem}</p>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        <div class="bg-white/5 border border-white/5 p-3 rounded-lg">
+                                            <span class="block text-[9px] font-bold text-gray-500 tracking-widest uppercase mb-1 font-mono">Conditions / Scope</span>
+                                            <p class="text-[11px] text-gray-400 leading-relaxed">${(n.data.conditions || []).join(', ')}</p>
+                                        </div>
+                                        <div class="bg-white/5 border border-white/5 p-3 rounded-lg">
+                                            <span class="block text-[9px] font-bold text-gray-500 tracking-widest uppercase mb-1 font-mono">Outcome & Evidence</span>
+                                            <p class="text-[11px] text-gray-400 leading-relaxed">${n.data.outcome}</p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -315,6 +352,34 @@
                 console.error("Failed to load graph/timeline:", e);
             }
         }
+        window.showNodeDetails = function(nodeId) {
+            const n = window.graphNodes[nodeId];
+            if (!n) return;
+            document.getElementById('modalTitle').innerText = n.data.action;
+            
+            document.getElementById('modalContent').innerHTML = `
+                <div class="flex items-center gap-3 mb-6">
+                    ${n.data.commit_hash ? `<span class="inline-flex items-center px-2 py-0.5 rounded bg-white/5 text-[11px] text-gray-400 border border-white/10 font-mono"><svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>git: ${n.data.commit_hash.substring(0,7)}</span>` : ''}
+                    ${n.data.author ? `<span class="text-xs text-gray-500 font-medium">${n.data.author}</span>` : ''}
+                    <span class="px-2 py-0.5 text-[10px] font-bold rounded-full border border-white/20 tracking-widest uppercase font-mono shrink-0 ml-auto ${n.data.status === 'VERIFIED' ? 'text-emerald-400 border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] bg-emerald-500/10' : n.data.status === 'SUPERSEDED' ? 'text-red-400 border-red-500/50 shadow-[0_0_8px_rgba(239,68,68,0.3)] bg-red-500/10' : 'text-gray-300'}">${n.data.status}</span>
+                </div>
+                <div class="mb-4 bg-black/50 border border-white/5 p-4 rounded-xl shadow-inner">
+                    <span class="block text-[10px] font-bold text-gray-500 tracking-widest uppercase mb-2 font-mono">Problem</span>
+                    <p class="text-sm text-gray-300 leading-relaxed">${n.data.problem}</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-white/5 border border-white/5 p-4 rounded-xl">
+                        <span class="block text-[10px] font-bold text-gray-500 tracking-widest uppercase mb-2 font-mono">Conditions / Scope</span>
+                        <p class="text-sm text-gray-400 leading-relaxed">${(n.data.conditions || []).join(', ')}</p>
+                    </div>
+                    <div class="bg-white/5 border border-white/5 p-4 rounded-xl">
+                        <span class="block text-[10px] font-bold text-gray-500 tracking-widest uppercase mb-2 font-mono">Outcome & Evidence</span>
+                        <p class="text-sm text-gray-400 leading-relaxed">${n.data.outcome}</p>
+                    </div>
+                </div>
+            `;
+            document.getElementById('nodeModal').classList.remove('hidden');
+        };
         
     </script>
     <script>
@@ -403,5 +468,17 @@
         }
         animate();
     </script>
+    <!-- Node Details Modal -->
+    <div id="nodeModal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="glass w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl border border-white/10 p-8 shadow-2xl animate-fade-in-up">
+            <div class="flex justify-between items-start mb-6">
+                <h2 id="modalTitle" class="text-2xl font-bold text-white leading-tight"></h2>
+                <button onclick="document.getElementById('nodeModal').classList.add('hidden')" class="text-gray-500 hover:text-white transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div id="modalContent" class="space-y-6"></div>
+        </div>
+    </div>
 </body>
 </html>

@@ -31,6 +31,9 @@ class GitLogIngester:
         log_output = stdout.decode()
         commits_raw = log_output.split("commit ")
         
+        from lorex.db.schema import Experience
+        existing_hashes = {record.source_id for record in session.query(Experience.source_id).all()}
+        
         events = []
         skip_keywords = ["lint", "typo", "bump", "docs", "format", "ignore", "merge"]
         
@@ -40,6 +43,10 @@ class GitLogIngester:
             
             lines = c.split("\n")
             commit_hash = lines[0].strip()
+            if commit_hash in existing_hashes:
+                print(f"Skipping already ingested commit: {commit_hash[:7]}")
+                continue
+                
             author_name = "Unknown"
             author_email = "Unknown"
             committed_at = None

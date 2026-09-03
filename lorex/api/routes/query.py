@@ -33,6 +33,7 @@ def run_query(req: QueryRequest, session: Session = Depends(get_db)):
             "confidence": exp.confidence,
             "commit_hash": exp.commit_hash,
             "author": exp.author,
+            "timestamp": exp.created_at.isoformat() if exp.created_at else None,
             "score": score,
             "evidence": ev_content
         })
