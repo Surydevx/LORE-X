@@ -1,7 +1,7 @@
 [project]
 site_url = "https://www.example.com/"
 site_name = "LORE-X"
-site_description = "LORE-X: "
+site_description = "LORE-X: Living Organizational Record Engine"
 site_author = "Surydevx"
 
 copyright = "Copyright &copy; 2026 Surydevx"
