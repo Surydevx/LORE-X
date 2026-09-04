@@ -11,14 +11,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const navContainer = document.createElement("div");
   navContainer.id = "lorex-dynamic-nav";
 
-  // Build the DOM nodes
   navLinks.forEach(link => {
     const a = document.createElement("a");
     a.href = link.path;
     a.className = "nav-item";
     a.style.backgroundColor = link.color;
     
-    // Store data attributes so we can re-check them on URL changes
     a.dataset.id = link.id;
     a.dataset.path = link.path;
 
@@ -30,21 +28,33 @@ document.addEventListener("DOMContentLoaded", () => {
     navContainer.appendChild(a);
   });
 
-  // Inject into header
   const headerInner = document.querySelector(".md-header__inner");
-  if (headerInner) {
-    const navWrapper = document.createElement("div");
-    navWrapper.className = "lorex-nav-wrapper";
-    navWrapper.appendChild(navContainer);
-    
-    const title = headerInner.querySelector(".md-header__title");
-    if (title) title.parentNode.insertBefore(navWrapper, title.nextSibling);
-    else headerInner.appendChild(navWrapper);
-  } else {
-    document.body.appendChild(navContainer);
+  const navWrapper = document.createElement("div");
+  navWrapper.className = "lorex-nav-wrapper";
+
+  // --- THE MAGIC: Responsive DOM Placement ---
+  function placeDock() {
+    if (window.innerWidth <= 768) {
+      // Mobile: Escape the header trap, attach to body
+      document.body.appendChild(navContainer);
+    } else {
+      // Desktop: Place neatly in the header
+      if (headerInner) {
+        const title = headerInner.querySelector(".md-header__title");
+        if (title) title.parentNode.insertBefore(navWrapper, title.nextSibling);
+        else headerInner.appendChild(navWrapper);
+        navWrapper.appendChild(navContainer);
+      } else {
+        document.body.appendChild(navContainer);
+      }
+    }
   }
 
-  // --- THE MAGIC: Dynamic SPA Routing ---
+  // Run on load and whenever the user resizes the window
+  placeDock();
+  window.addEventListener("resize", placeDock);
+
+  // --- SPA Routing Updates ---
   function updateActiveState() {
     let currentPath = window.location.pathname.toLowerCase();
     currentPath = currentPath.replace(/\/index\.html$/, "").replace(/\/$/, "") || "/";
@@ -52,22 +62,15 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll("#lorex-dynamic-nav .nav-item").forEach(a => {
       const linkId = a.dataset.id;
       let targetPath = a.dataset.path.toLowerCase().replace(/\/$/, "") || "/";
-
       const isHome = (linkId === "index" && currentPath === "/");
       const isExactMatch = (linkId !== "index" && currentPath === targetPath);
 
-      if (isHome || isExactMatch) {
-        a.classList.add("active");
-      } else {
-        a.classList.remove("active");
-      }
+      if (isHome || isExactMatch) a.classList.add("active");
+      else a.classList.remove("active");
     });
   }
 
-  // Run on first load
   updateActiveState();
-
-  // Watch for MkDocs Instant Loading (URL changes)
   let lastUrl = location.href;
   new MutationObserver(() => {
     const url = location.href;

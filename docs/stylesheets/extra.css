@@ -181,28 +181,39 @@ code, kbd, pre, .md-typeset code, .md-typeset pre { font-family: var(--md-code-f
 }
 
 /* =========================================
-   5. MOBILE DOCK & MATRIX HERO
+   5. MOBILE RESPONSIVENESS & MATRIX HERO
    ========================================= */
-/* Hide the native MkDocs hamburger menu on mobile */
+/* Hide the native MkDocs hamburger menu */
 label[for="__drawer"] {
   display: none !important;
 }
 
 @media screen and (max-width: 768px) {
-  /* Let the wrapper exist, but force it to take up zero space in the header */
-  .lorex-nav-wrapper {
-    width: 0;
-    margin: 0;
+  /* Scale down the massive pixel text so it doesn't word-wrap brutally */
+  .hero-pixel {
+    font-size: 1.8rem !important; 
+    line-height: 1.3 !important;
   }
   
-  /* The dock breaks out of the header and snaps to the bottom */
+  /* Shrink the subtitle slightly for better reading */
+  .hero-subtitle {
+    font-size: 0.95rem !important;
+    padding: 0 1rem;
+  }
+
+  /* Hide the empty header wrapper */
+  .lorex-nav-wrapper {
+    display: none !important;
+  }
+  
+  /* The dock is now safely attached to the body, so it will snap to the bottom */
   #lorex-dynamic-nav {
     position: fixed !important;
     top: auto !important;
-    bottom: 20px !important;
+    bottom: 25px !important;
     left: 50% !important;
     transform: translateX(-50%) !important;
-    z-index: 9999 !important;
+    z-index: 99999 !important;
     background: rgba(128, 128, 128, 0.25) !important;
     border: 1px solid rgba(255, 255, 255, 0.15) !important;
     box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
