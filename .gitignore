@@ -58,3 +58,4 @@ logs/
 # Misc
 *.sqlite3
 *.db
+site

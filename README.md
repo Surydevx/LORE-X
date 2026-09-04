@@ -39,37 +39,30 @@ Every architectural decision is modeled as a 7-dimensional tuple:
 - **Hybrid Retrieval Engine** — Ranks past decisions using a weighted combination of Semantic Relevance, Graph Lineage, Temporal Validity, and Outcome Status.
 - **Self-Correcting Memory Graph** — APM webhook endpoint allows your telemetry stack (Datadog, PagerDuty, Prometheus) to autonomously downgrade failing architectural patterns.
 - **Idempotent Ingestion** — Exact-once processing of commit hashes prevents database bloat on repeated syncs.
+- **Rich Terminal Output** — `lorex log` and `lorex graph` render styled tables and knowledge trees directly in the terminal using [Rich](https://github.com/Textualize/rich).
 - **Interactive Dashboard** — Dark-mode glassmorphism UI with 3D particle physics, Mermaid.js lineage graphs, and a timeline view.
 
 ---
 
-## Installation & Quickstart
+## Installation
 
-### Prerequisites
+### Quick Install (Recommended)
 
-- Python 3.10+
-- [`uv`](https://docs.astral.sh/uv/) package manager (recommended) or `pip`
-- An API key from **Google AI Studio** (Gemini), **OpenAI**, or **Anthropic**
+Pre-requisites: [`uv`](https://docs.astral.sh/uv/#installation) and [`git`](https://git-scm.com/install/).
+
+```bash
+uv tool install git+https://github.com/Surydevx/LORE-X.git
+```
+
+This installs the `lorex` CLI globally — no clone needed.
 
 ### From Source
 
 ```bash
-# Clone and install
 git clone https://github.com/Surydevx/LORE-X.git
 cd LORE-X
 uv sync
-
-# Initialize LORE-X in your repository
-lorex init
-
-# Backfill existing history (last 20 commits)
-lorex ingest . --limit 20
-
-# Launch the dashboard
-lorex serve
 ```
-
-Open your browser to `http://localhost:8000/dashboard`.
 
 ### As a Standalone Binary
 
@@ -78,8 +71,36 @@ LORE-X can also be distributed as a PyInstaller `--onefile` binary with no runti
 ```bash
 chmod +x lorex
 sudo mv lorex /usr/local/bin/
-lorex init
 ```
+
+---
+
+## Quickstart
+
+```bash
+# 1. Navigate to your Git repository
+cd /path/to/your/repo
+
+# 2. Initialize LORE-X (sets up database, .env, .gitignore, post-commit hook)
+lorex init
+
+# 3. Backfill existing history
+lorex ingest . --limit 20
+
+# 4. View extraction history in the terminal
+lorex log
+
+# 5. View the knowledge graph as a tree
+lorex graph
+
+# 6. Query past decisions
+lorex query "API latency under load"
+
+# 7. Launch the web dashboard
+lorex serve
+```
+
+Open your browser to `http://localhost:8000/dashboard`.
 
 ---
 
@@ -87,10 +108,12 @@ lorex init
 
 | Command | Description |
 |---------|-------------|
-| `lorex init` | Bootstraps `.env` file, database schema, `.gitignore` entries, and `post-commit` hook |
-| `lorex ingest <path>` | Scans a Git repository and extracts architectural decisions. Supports `--limit` and `--project` |
-| `lorex query "<text>"` | Runs a hybrid retrieval query against the memory graph from the terminal |
-| `lorex serve` | Starts the Uvicorn ASGI server and hosts the interactive dashboard on port 8000 |
+| `lorex init` | Bootstraps `.env`, database schema, `.gitignore` entries, and `post-commit` hook. Prompts for an API key if none is detected. |
+| `lorex ingest <path>` | Scans a Git repository and extracts architectural decisions. Supports `--limit` and `--project`. |
+| `lorex query "<text>"` | Runs a hybrid retrieval query against the memory graph from the terminal. |
+| `lorex log` | Displays recent extractions as a styled terminal table. Supports `--limit` and `--project`. |
+| `lorex graph` | Renders the knowledge graph as an interactive terminal tree. Supports `--limit` and `--project`. |
+| `lorex serve` | Starts the Uvicorn ASGI server and hosts the interactive dashboard. Supports `--port`. |
 
 ---
 
@@ -131,7 +154,7 @@ Set the `LOREX_WEBHOOK_SECRET` environment variable to enable authentication. Wh
 
 ## Configuration
 
-LORE-X reads configuration from environment variables (or a `.env` file in the working directory):
+LORE-X reads configuration from environment variables or a `.env` file in the working directory. The `.env` file is automatically loaded at CLI startup via `python-dotenv`, and during ingestion the target repository's `.env` takes precedence.
 
 | Variable | Required | Description |
 |----------|----------|-------------|
@@ -142,8 +165,6 @@ LORE-X reads configuration from environment variables (or a `.env` file in the w
 | `LOREX_WEBHOOK_SECRET` | No | Shared secret for APM webhook authentication |
 
 **Provider priority:** Gemini → OpenAI → Anthropic. The first available key wins.
-
-**Current Gemini model:** `gemini/gemini-3.6-flash` (Google AI Studio free tier).
 
 ---
 
@@ -159,7 +180,7 @@ lorex/
 │   │   ├── outcomes.py     # Outcome recording & APM webhook
 │   │   └── graph.py        # Experience lineage graph endpoint
 │   └── static/
-│       └── index.html       # Dashboard UI (Tailwind + Mermaid.js)
+│       └── index.html      # Dashboard UI (Tailwind + Mermaid.js)
 ├── core/
 │   ├── models.py           # Pydantic models (ExperienceTuple, StatusEnum)
 │   ├── graph.py            # Cycle detection for dependency graphs
@@ -176,7 +197,7 @@ lorex/
 │   └── extraction.jinja2   # Jinja2 prompt template for LLM extraction
 ├── vcs/
 │   └── local_git.py        # Async Git log ingestion with semaphore throttling
-└── cli.py                  # CLI entry point (init, ingest, query, serve)
+└── cli.py                  # CLI entry point (init, ingest, query, log, graph, serve)
 ```
 
 ---
@@ -196,22 +217,8 @@ uv run python scripts/evaluate.py
 # Run Bayesian weight optimization
 uv run python scripts/optimize.py
 
-# Run the demo scenario
+# Run the 5-phase demo scenario
 uv run python scripts/run_demo.py
-```
-
----
-## Download and use the binary
-
-pre-requisites:
-
-* [`uv`](https://docs.astral.sh/uv/#installation)
-* [`git`](https://git-scm.com/install/)
-
-Once you download these packages you can run this command in your terminal:
-
-```Bash
-uv tool install git+https://github.com/Surydevx/LORE-X.git
 ```
 
 ---

@@ -1,73 +1,56 @@
-# LORE-X: Living Organisational Record Engine
+---
+icon: lucide/rocket
+---
 
-LORE-X is the next-generation architectural memory platform. It shifts knowledge retrieval away from naive semantic search (RAG) and document wikis, and directly into an experience-based decision memory model.
+# LORE-X Documentation
 
-## Core Problem & Positioning
-Conventional search/RAG architectures retrieve documents based purely on semantic text overlap. They do not understand that an architectural decision that was highly effective in 2021 might be considered a catastrophic anti-pattern at production scale today.
+Welcome to the LORE-X technical documentation. These docs cover the system architecture, API surface, CLI usage, and internal engine design.
 
-LORE-X solves this by preserving institutional knowledge as a strict $(P, A, C, V, O, T, S)$ tuple:
-- **Problem:** The catalyst for the decision.
-- **Action:** The technical decision executed.
-- **Conditions:** Under what boundary conditions this action is valid.
-- **Evidence:** Concrete artifacts (PRs, incident logs) proving the outcome.
-- **Outcome:** The empirical result.
-- **Temporal/State:** The lifecycle (`VERIFIED`, `CONDITIONALLY_VALID`, `FAILED`, `SUPERSEDED`).
-- **Source:** The author/originating event (includes cryptographic Git SHAs and author emails).
+## Table of Contents
 
-By capturing lifecycle and bounding conditions, LORE-X's retrieval engine actively deprecates obsolete decisions and dynamically surfaces solutions grounded entirely in proven empirical evidence.
+- [Architecture](architecture.md) — System design, retrieval mathematics, and ingestion pipeline
+- [CLI Guide](cli.md) — Full reference for all `lorex` commands
+- [API Reference](api.md) — REST endpoint specifications, request/response schemas, and webhook integration
+- [Configuration](configuration.md) — Environment variables, `.env` handling, and provider setup
+- [Development](development.md) — Contributing, testing, optimization, and project structure
 
-## System Architecture
+---
 
-LORE-X operates a robust 4-stage pipeline:
-1. **Asynchronous Ingestion Adapters:** Consumes Git logs via a Zero-Touch `post-commit` hook. Uses `asyncio` for non-blocking extraction, features heuristic commit filtering (dropping trivial messages), and enforces API Concurrency Throttling via Semaphores to prevent HTTP 429 limits. Captures exact metadata (Author, Date, SHA checksums).
-2. **Experience Extraction Engine:** Analyzes unstructured text with deterministic LLMs to enforce the `ExperienceTuple` schema. Features full AI Observability (via `litellm`) logging token usage and latency.
-3. **Hybrid Retrieval Engine:** A unified retrieval ranking that factors in Semantic, Temporal, Outcome, and Graph lineage scores.
-4. **Outcome & Revision Engine (APM Telemetry Webhooks):** Integrates directly with your observability stack (e.g. Datadog). When a metric breaches, the `/apm-webhook` endpoint autonomously degrades the failing architectural pattern in its memory graph (e.g., from `VERIFIED` to `FAILED`).
+## What is LORE-X?
 
-## The 3D Glassmorphism UI
-LORE-X ships with a sleek, premium dark-mode dashboard (`lorex serve`) featuring a 3D animated dot-wave physics engine, interactive Mermaid.js lineage graphs, and dynamic empty-state handling.
+LORE-X is an autonomous architectural memory engine for engineering teams. It passively monitors Git activity, extracts the intent behind architectural decisions using LLMs, and stores them as structured Experience Tuples with full lifecycle tracking.
 
-## Empirical Benchmark Results (Section 17)
-The Evaluation Suite (`python scripts/evaluate.py`) tests LORE-X against Baseline LLMs and Standard Vector RAG using 10 deterministic lifecycle questions:
+Unlike conventional RAG systems that retrieve documents based solely on semantic text overlap, LORE-X understands that decisions age, fail, and get superseded. Its Hybrid Retrieval Engine factors in temporal validity, outcome status, and graph lineage alongside semantic relevance — eliminating temporal hallucination entirely.
 
-| Metric | Baseline LLM | Standard RAG | LORE-X Hybrid |
-|--------|--------------|--------------|---------------|
-| Recommendation Accuracy | ~10.0% | ~50.0% | **90.0%+** |
-| Temporal Accuracy       | ~0.0%  | ~0.0%  | **100.0%** |
-| Evidence Grounding Rate | ~0.0%  | ~50.0% | **100.0%** |
+### The Experience Tuple
 
-*Standard RAG routinely recommends obsolete patterns because outdated documents still have high semantic text similarity. LORE-X Hybrid completely eliminates temporal hallucination.*
+Every architectural decision is captured as a 7-dimensional tuple $(P, A, C, V, O, T, S)$:
 
-## Quickstart & Operations
+| Dimension | Description |
+|-----------|-------------|
+| **Problem** ($P$) | The engineering challenge that triggered the decision |
+| **Action** ($A$) | The specific architectural decision applied |
+| **Conditions** ($C$) | Boundary conditions under which the action is valid |
+| **Evidence** ($V$) | Concrete artifacts backing the decision (commit SHAs, PR links) |
+| **Outcome** ($O$) | The empirical result observed after applying the action |
+| **Temporal Validity** ($T$) | The lifespan of the decision (from `valid_from` until `valid_until`) |
+| **Status** ($S$) | Current health: `VERIFIED`, `PARTIALLY_VERIFIED`, `CONDITIONALLY_VALID`, `SUPERSEDED`, or `FAILED` |
 
-**1. Environment Setup**
-```bash
-uv sync
-```
-
-**2. Unified CLI Operations**
-LORE-X ships with a unified CLI `lorex` for easy operation. It securely manages your API Keys and `.gitignore`.
+### Quick Start
 
 ```bash
-# Initialize database, secrets, and Git hook
+# Install globally via uv
+uv tool install git+https://github.com/Surydevx/LORE-X.git
+
+# Initialize in your repo
+cd /path/to/your/repo
 lorex init
 
-# Ingest local git history manually
-lorex ingest . --limit 10
+# Ingest commit history
+lorex ingest . --limit 20
 
-# Launch Web Dashboard (3D Glassmorphism UI)
+# Explore
+lorex log
+lorex query "database connection pooling"
 lorex serve
 ```
-
-**3. Test Suite Execution**
-```bash
-pytest tests/
-```
-
-**4. Run Bayesian Optimization**
-```bash
-python scripts/optimize.py
-```
-
-**5. Documentation**
-*Documentation is ingested and hosted via Zensical.*

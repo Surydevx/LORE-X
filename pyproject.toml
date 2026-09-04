@@ -36,4 +36,5 @@ testpaths = ["tests"]
 dev = [
     "pytest>=9.1.1",
     "optuna",
+    "zensical>=0.0.59",
 ]
