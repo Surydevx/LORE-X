@@ -42,6 +42,16 @@ def main():
         default=8000,
         help="Port to run the server on",
     )
+    
+    # lorex log
+    log_parser = subparsers.add_parser("log", help="View extraction history in a terminal table")
+    log_parser.add_argument("--limit", type=int, default=10, help="Number of recent experiences to show")
+    log_parser.add_argument("--project", default="p1", help="Project ID to filter by")
+
+    # lorex graph
+    graph_parser = subparsers.add_parser("graph", help="View knowledge relationships as a terminal tree")
+    graph_parser.add_argument("--limit", type=int, default=5, help="Number of recent commits to map")
+    graph_parser.add_argument("--project", default="p1", help="Project ID to filter by")
 
     args = parser.parse_args()
 
@@ -57,6 +67,10 @@ def main():
         _handle_ingest(args)
     elif args.command == "serve":
         _handle_serve(args)
+    elif args.command == "log":
+        _handle_log(args)
+    elif args.command == "graph":
+        _handle_graph(args)
 
 
 def _handle_init():
@@ -212,6 +226,100 @@ def _handle_serve(args):
         print(f"Error starting server: {e}", file=sys.stderr)
         sys.exit(1)
 
+
+def _handle_log(args):
+    from rich.console import Console
+    from rich.table import Table
+    from lorex.db.session import get_session, init_db
+    from lorex.db.schema import Experience
+
+    console = Console()
+    try:
+        init_db()
+        session = get_session()
+        try:
+            # Order by created_at if present, otherwise fall back to primary key id
+            order_col = getattr(Experience, "created_at", getattr(Experience, "id", None))
+            query = session.query(Experience).filter(Experience.project_id == args.project)
+            
+            if order_col is not None:
+                experiences = query.order_by(order_col.desc()).limit(args.limit).all()
+            else:
+                experiences = query.limit(args.limit).all()
+
+            if not experiences:
+                console.print(f"[yellow]No extractions found for project '{args.project}'.[/yellow]")
+                return
+
+            table = Table(title=f"LORE-X Extraction History ({args.project})", show_lines=True)
+            table.add_column("Commit", style="cyan", no_wrap=True)
+            table.add_column("Status", justify="center")
+            table.add_column("Problem", style="magenta")
+            table.add_column("Action", style="green")
+
+            for exp in experiences:
+                status_color = "green" if exp.status == "VERIFIED" else "yellow"
+                short_hash = (exp.commit_hash or "unknown")[:7]
+                problem_trunc = exp.problem[:60] + "..." if len(exp.problem) > 60 else exp.problem
+                action_trunc = exp.action[:60] + "..." if len(exp.action) > 60 else exp.action
+                
+                table.add_row(
+                    short_hash,
+                    f"[{status_color}]{exp.status}[/{status_color}]",
+                    problem_trunc,
+                    action_trunc
+                )
+            
+            console.print(table)
+        finally:
+            session.close()
+    except Exception as e:
+        console.print(f"[red]Error fetching logs: {e}[/red]")
+
+
+def _handle_graph(args):
+    from rich.console import Console
+    from rich.tree import Tree
+    from lorex.db.session import get_session, init_db
+    from lorex.db.schema import Experience
+
+    console = Console()
+    try:
+        init_db()
+        session = get_session()
+        try:
+            order_col = getattr(Experience, "created_at", getattr(Experience, "id", None))
+            query = session.query(Experience).filter(Experience.project_id == args.project)
+            
+            if order_col is not None:
+                experiences = query.order_by(order_col.desc()).limit(args.limit).all()
+            else:
+                experiences = query.limit(args.limit).all()
+
+            if not experiences:
+                console.print(f"[yellow]No data available to graph for project '{args.project}'.[/yellow]")
+                return
+
+            root = Tree(f"🧠 [bold green]LORE-X Knowledge Graph ({args.project})[/bold green]")
+
+            for exp in experiences:
+                short_hash = (exp.commit_hash or "unknown")[:7]
+                commit_node = root.add(f"[cyan]Commit {short_hash}[/cyan]")
+                problem_node = commit_node.add(f"[red]Problem:[/red] {exp.problem}")
+                action_node = problem_node.add(f"[blue]Action:[/blue] {exp.action}")
+                
+                # Check for context/cause and outcome dynamically
+                context_val = getattr(exp, "context", getattr(exp, "cause", None))
+                if context_val:
+                    action_node.add(f"[yellow]Context/Cause:[/yellow] {context_val}")
+                if getattr(exp, "outcome", None):
+                    action_node.add(f"[magenta]Outcome:[/magenta] {exp.outcome}")
+
+            console.print(root)
+        finally:
+            session.close()
+    except Exception as e:
+        console.print(f"[red]Error generating graph: {e}[/red]")
 
 if __name__ == "__main__":
     main()

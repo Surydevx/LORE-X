@@ -16,6 +16,7 @@ dependencies = [
     "litellm",
     "aiofiles",
     "python-dotenv",
+    "rich>=15.0.0",
 ]
 
 [project.scripts]
