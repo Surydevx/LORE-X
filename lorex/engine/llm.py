@@ -12,17 +12,6 @@ try:
 except ImportError:
     LITELLM_AVAILABLE = False
 
-def _strip_env_value(val: str) -> str:
-    """Strip surrounding quotes and inline comments from .env values."""
-    val = val.strip()
-    # Strip surrounding quotes (single or double)
-    if len(val) >= 2 and val[0] == val[-1] and val[0] in ('"', "'"):
-        val = val[1:-1]
-    # Strip inline comments (space + #)
-    if " #" in val:
-        val = val[:val.index(" #")].strip()
-    return val
-
 def _strip_markdown_fences(text: str) -> str:
     """Strip markdown code fences from LLM JSON responses."""
     text = text.strip()

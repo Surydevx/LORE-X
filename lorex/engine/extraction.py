@@ -66,8 +66,9 @@ class ExperienceExtractor:
         except Exception as e:
             # Null-guard event.content
             content = event.content or ""
-            commit_hash = event.commit_hash[:7] if event.commit_hash else "unknown"
-            author = event.author_name or "developer"
+            commit_hash = getattr(event, 'commit_hash', None)
+            commit_hash = commit_hash[:7] if commit_hash else "unknown"
+            author = getattr(event, 'author_name', None) or "developer"
             
             print(f"[LORE-X ERROR] LLM Extraction failed for commit {commit_hash}: {str(e)}", file=sys.stderr)
             

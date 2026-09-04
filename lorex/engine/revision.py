@@ -35,7 +35,7 @@ class RevisionEngine:
             outcome=observed_outcome,
             status=new_status,
             confidence=experience.confidence,
-            created_at=experience.created_at,
+            created_at=now,
             valid_from=now
         )
         

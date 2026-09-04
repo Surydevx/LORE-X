@@ -334,7 +334,7 @@
                 // Build Timeline
                 const timelineDiv = document.getElementById('timeline');
                 
-                const sortedNodes = data.nodes.sort((a,b) => {
+                const sortedNodes = [...data.nodes].sort((a,b) => {
                     const timeA = a.data.valid_from ? new Date(a.data.valid_from).getTime() : 0;
                     const timeB = b.data.valid_from ? new Date(b.data.valid_from).getTime() : 0;
                     return timeA - timeB;

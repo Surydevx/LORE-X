@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 
 from lorex.db.session import get_db
@@ -32,7 +32,7 @@ def ingest_event(req: EventIngestRequest, session: Session = Depends(get_db)):
         project_id=req.project_id,
         source_type=req.source_type,
         source_id=req.source_id,
-        timestamp=datetime.utcnow(),
+        timestamp=datetime.now(timezone.utc),
         author=req.author,
         content=req.content
     )
@@ -60,4 +60,4 @@ async def ingest_local_git(req: VCSRequest, session: Session = Depends(get_db)):
         exps = await ingester.ingest_repository(req.repo_path, req.project_id, session, req.limit)
         return {"message": f"Successfully ingested {len(exps)} experiences from {req.repo_path}"}
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=f"VCS ingestion failed: {str(e)}")
