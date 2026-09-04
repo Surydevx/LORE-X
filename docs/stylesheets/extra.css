@@ -26,36 +26,55 @@ code, kbd, pre, .md-typeset code, .md-typeset pre { font-family: var(--md-code-f
 .hero-pixel .text-accent { color: var(--lorex-accent) !important; }
 
 /* =========================================
-   2. FULL-WIDTH TABLES OVERRIDE
+   2. BUTTONS & CODE WRAP FIXES
    ========================================= */
-/* Ensure the scroll wrapper allows full expansion */
+.md-button { 
+  font-family: var(--md-code-font-family) !important; 
+  font-weight: 700; 
+  border-radius: 8px !important; 
+  white-space: nowrap !important;
+  padding: 0.6rem 1.2rem !important;
+}
+
+.hero-buttons {
+  margin-top: 2rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+/* Force Bash/Code Commands to wrap */
+.md-typeset pre > code {
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+}
+
+/* =========================================
+   3. FULL-WIDTH TABLES OVERRIDE
+   ========================================= */
 .md-typeset__scrollwrap {
   width: 100% !important;
-  overflow-x: auto;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
 }
 
-/* Force the table container to stretch */
-.md-typeset__table {
-  width: 100% !important;
-  min-width: 100% !important;
-}
+.md-typeset__table { width: 100% !important; min-width: 100% !important; }
 
-/* Force the actual table element to 100% */
 .md-typeset table:not([class]) {
   width: 100% !important;
   min-width: 100% !important;
   display: table !important;
-  table-layout: auto !important; /* Lets columns adjust dynamically to text */
+  table-layout: auto !important;
 }
 
-/* Add a bit of padding to cells for breathability on wide screens */
 .md-typeset table:not([class]) th,
 .md-typeset table:not([class]) td {
   padding: 1rem !important;
 }
 
 /* =========================================
-   3. LIGHT & DARK THEMES
+   4. LIGHT & DARK THEMES
    ========================================= */
 [data-md-color-scheme="default"] {
   --md-primary-fg-color: #22c55e;
@@ -74,12 +93,10 @@ code, kbd, pre, .md-typeset code, .md-typeset pre { font-family: var(--md-code-f
   --lorex-accent: #4ade80;
   --lorex-btn-text: #000000;
 }
-
-.md-button { font-family: var(--md-code-font-family) !important; font-weight: 700; border-radius: 4px; }
 .md-button--primary { color: var(--lorex-btn-text) !important; background-color: var(--md-primary-fg-color); border-color: var(--md-primary-fg-color); }
 
 /* =========================================
-   4. HEADER DOCK INTEGRATION (Perfect Snug Fit)
+   5. HEADER DOCK INTEGRATION (Desktop Physics)
    ========================================= */
 .lorex-nav-wrapper {
   flex-grow: 1;
@@ -92,9 +109,9 @@ code, kbd, pre, .md-typeset code, .md-typeset pre { font-family: var(--md-code-f
 #lorex-dynamic-nav {
   display: inline-flex;
   width: max-content;
-  gap: 0px; /* Kills the flexbox ghost spacing when collapsed */
+  gap: 0px; 
   align-items: center;
-  padding: 4px; /* Snug padding around the active button */
+  padding: 4px; 
   border-radius: 40px;
   background: rgba(128, 128, 128, 0.05);
   backdrop-filter: blur(8px);
@@ -104,8 +121,8 @@ code, kbd, pre, .md-typeset code, .md-typeset pre { font-family: var(--md-code-f
 }
 
 #lorex-dynamic-nav:hover {
-  gap: 6px; /* Bring the gaps back when expanded */
-  padding: 6px 10px; /* Expand the container hit-box */
+  gap: 6px; 
+  padding: 6px 10px; 
   background: rgba(128, 128, 128, 0.15);
   border: 1px solid rgba(255, 255, 255, 0.15);
   box-shadow: 0 4px 12px rgba(0,0,0,0.4);
@@ -124,11 +141,7 @@ code, kbd, pre, .md-typeset code, .md-typeset pre { font-family: var(--md-code-f
   font-size: 11.5px;
   white-space: nowrap;
   overflow: hidden;
-  
-  /* Glassmorphism */
   backdrop-filter: blur(10px);
-  
-  /* Collapse completely to 0 to prevent background stretching */
   width: max-content; 
   max-width: 0;
   opacity: 0;
@@ -136,77 +149,35 @@ code, kbd, pre, .md-typeset code, .md-typeset pre { font-family: var(--md-code-f
   padding: 0;
   border: none;
   transition: max-width 0.35s cubic-bezier(0.2, 1, 0.2, 1), 
-              opacity 0.25s ease, 
-              padding 0.25s ease, 
-              transform 0.25s ease, 
-              filter 0.25s ease;
+              opacity 0.25s ease, padding 0.25s ease, 
+              transform 0.25s ease, filter 0.25s ease;
 }
 
-/* STATE 1: Default Active Capsule */
-#lorex-dynamic-nav:not(:hover) .nav-item.active {
-  max-width: 200px;
-  padding: 0 14px;
-  opacity: 1;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-/* STATE 2: Hovering dock shrinks active item, reveals dots */
-#lorex-dynamic-nav:hover .nav-item {
-  max-width: 28px;
-  padding: 0 14px;
-  opacity: 1;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-#lorex-dynamic-nav:hover .nav-item .nav-text {
-  opacity: 0;
-}
-
-/* STATE 3: Hovering a specific dot expands it */
-#lorex-dynamic-nav:hover .nav-item:hover {
-  max-width: 250px;
-  padding: 0 16px;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-}
-#lorex-dynamic-nav:hover .nav-item:hover .nav-text {
-  opacity: 1;
-  transition: opacity 0.15s ease 0.1s;
-}
-
-/* STATE 4: Blur out siblings */
-#lorex-dynamic-nav:hover:has(.nav-item:hover) .nav-item:not(:hover) {
-  filter: blur(2px);
-  opacity: 0.35;
-  transform: scale(0.9);
-}
+#lorex-dynamic-nav:not(:hover) .nav-item.active { max-width: 200px; padding: 0 14px; opacity: 1; border: 1px solid rgba(255, 255, 255, 0.2); }
+#lorex-dynamic-nav:hover .nav-item { max-width: 28px; padding: 0 14px; opacity: 1; border: 1px solid rgba(255, 255, 255, 0.2); }
+#lorex-dynamic-nav:hover .nav-item .nav-text { opacity: 0; }
+#lorex-dynamic-nav:hover .nav-item:hover { max-width: 250px; padding: 0 16px; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.3); }
+#lorex-dynamic-nav:hover .nav-item:hover .nav-text { opacity: 1; transition: opacity 0.15s ease 0.1s; }
+#lorex-dynamic-nav:hover:has(.nav-item:hover) .nav-item:not(:hover) { filter: blur(2px); opacity: 0.35; transform: scale(0.9); }
 
 /* =========================================
-   5. MOBILE RESPONSIVENESS & MATRIX HERO
+   6. MOBILE RESPONSIVENESS & STATIC DOCK
    ========================================= */
-/* Hide the native MkDocs hamburger menu */
-label[for="__drawer"] {
-  display: none !important;
-}
+label[for="__drawer"] { display: none !important; }
 
 @media screen and (max-width: 768px) {
-  /* Scale down the massive pixel text so it doesn't word-wrap brutally */
-  .hero-pixel {
-    font-size: 1.8rem !important; 
-    line-height: 1.3 !important;
-  }
+  .hero-pixel { font-size: 1.8rem !important; line-height: 1.3 !important; }
+  .hero-subtitle { font-size: 0.95rem !important; padding: 0 1rem; }
+  .lorex-nav-wrapper { display: none !important; }
   
-  /* Shrink the subtitle slightly for better reading */
-  .hero-subtitle {
-    font-size: 0.95rem !important;
-    padding: 0 1rem;
-  }
+  /* Fix squished buttons */
+  .hero-buttons { flex-direction: column; align-items: center; width: 100%; }
+  .hero-buttons .md-button { width: 100%; max-width: 260px; text-align: center; }
+  
+  /* Fix table swiping */
+  .md-typeset table:not([class]) { display: block !important; overflow-x: auto !important; white-space: nowrap !important; }
 
-  /* Hide the empty header wrapper */
-  .lorex-nav-wrapper {
-    display: none !important;
-  }
-  
-  /* The dock is now safely attached to the body, so it will snap to the bottom */
+  /* Static Mobile Dock (No hover glitches) */
   #lorex-dynamic-nav {
     position: fixed !important;
     top: auto !important;
@@ -217,9 +188,28 @@ label[for="__drawer"] {
     background: rgba(128, 128, 128, 0.25) !important;
     border: 1px solid rgba(255, 255, 255, 0.15) !important;
     box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
+    width: max-content !important;
+    max-width: 90vw !important;
+    display: flex !important;
+    gap: 8px !important;
+    padding: 8px 12px !important;
+    overflow-x: auto !important;
   }
+  #lorex-dynamic-nav .nav-item { max-width: 32px !important; width: 32px !important; padding: 0 !important; opacity: 1 !important; }
+  #lorex-dynamic-nav .nav-item .nav-text { display: none !important; }
+  #lorex-dynamic-nav .nav-item.active { max-width: 150px !important; width: max-content !important; padding: 0 12px !important; }
+  #lorex-dynamic-nav .nav-item.active .nav-text { display: inline-block !important; opacity: 1 !important; }
+
+  /* Nuke all hover physics on mobile */
+  #lorex-dynamic-nav:hover .nav-item { max-width: 32px !important; padding: 0 !important; }
+  #lorex-dynamic-nav:hover .nav-item.active { max-width: 150px !important; padding: 0 12px !important; }
+  #lorex-dynamic-nav:hover .nav-item:hover { transform: none !important; box-shadow: none !important; }
+  #lorex-dynamic-nav:hover:has(.nav-item:hover) .nav-item:not(:hover) { filter: none !important; opacity: 1 !important; }
 }
 
+/* =========================================
+   7. MATRIX HERO BACKGROUND
+   ========================================= */
 .hero-matrix {
   position: relative;
   padding: 1.5rem 2rem 4rem 2rem; 

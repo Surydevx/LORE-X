@@ -14,7 +14,7 @@ hide:
     Extract institutional memory directly from git. Local-first, zero telemetry, and built for terminal workflows.
   </p>
   
-  <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: center;">
+  <div class="hero-buttons">
     <a href="cli/" class="md-button md-button--primary">Get Started</a>
     <a href="architecture/" class="md-button">Read the Architecture</a>
   </div>

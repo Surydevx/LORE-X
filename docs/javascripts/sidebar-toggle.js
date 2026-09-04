@@ -1,4 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
+  // 1. Navigation Configuration
   const navLinks = [
     { id: "index", name: "Get started", path: "/", color: "rgba(74, 222, 128, 0.85)" },
     { id: "architecture", name: "Architecture", path: "/architecture/", color: "rgba(56, 189, 248, 0.85)" },
@@ -8,6 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
     { id: "development", name: "Development", path: "/development/", color: "rgba(244, 114, 182, 0.85)" }
   ];
 
+  // 2. Build the DOM nodes
   const navContainer = document.createElement("div");
   navContainer.id = "lorex-dynamic-nav";
 
@@ -32,13 +34,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const navWrapper = document.createElement("div");
   navWrapper.className = "lorex-nav-wrapper";
 
-  // --- THE MAGIC: Responsive DOM Placement ---
+  // 3. Responsive DOM Placement (Moves dock based on viewport)
   function placeDock() {
     if (window.innerWidth <= 768) {
-      // Mobile: Escape the header trap, attach to body
+      // Mobile: Escape the header trap, attach directly to body
       document.body.appendChild(navContainer);
     } else {
-      // Desktop: Place neatly in the header
+      // Desktop: Place neatly inside the header
       if (headerInner) {
         const title = headerInner.querySelector(".md-header__title");
         if (title) title.parentNode.insertBefore(navWrapper, title.nextSibling);
@@ -50,11 +52,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Run on load and whenever the user resizes the window
+  // Run on initial load and whenever the user resizes the window
   placeDock();
   window.addEventListener("resize", placeDock);
 
-  // --- SPA Routing Updates ---
+  // 4. SPA Routing Updates (Handles Instant Navigation)
   function updateActiveState() {
     let currentPath = window.location.pathname.toLowerCase();
     currentPath = currentPath.replace(/\/index\.html$/, "").replace(/\/$/, "") || "/";
@@ -71,6 +73,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   updateActiveState();
+  
+  // Watch for MkDocs Instant Loading URL changes without full page reload
   let lastUrl = location.href;
   new MutationObserver(() => {
     const url = location.href;
