@@ -1,9 +1,4 @@
----
-icon: lucide/rocket
-hide:
-  - navigation
-  - toc
----
+
 
 <div class="hero-matrix" align="center">
   <h1 class="hero-pixel">
