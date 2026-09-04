@@ -201,6 +201,20 @@ uv run python scripts/run_demo.py
 ```
 
 ---
+## Download and use the binary
+
+pre-requisites:
+
+* [`uv`](https://docs.astral.sh/uv/#installation)
+* [`git`](https://git-scm.com/install/)
+
+Once you download these packages you can run this command in your terminal:
+
+```Bash
+uv tool install git+https://github.com/Surydevx/LORE-X.git
+```
+
+---
 
 ## Security
 
