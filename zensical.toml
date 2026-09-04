@@ -7,21 +7,22 @@ site_author = "Surydevx"
 copyright = "Copyright &copy; 2026 Surydevx"
 
 repo_url = "https://github.com/Surydevx/LORE-X"
-repo_name = "SUrydevx/LORE-X"
+repo_name = "Surydevx/LORE-X"
 edit_uri = "edit/main/docs/"
 
 nav = [
   { "Get started" = "index.md" },
   { "Architecture" = "architecture.md" },
   { "CLI Guide" = "cli.md" },
-  { "Api Reference" = "api.md" },
+  { "API Reference" = "api.md" },
   { "Configuration" = "configuration.md" },
   { "Development" = "development.md" },
 ]
 
-# extra_css = ["stylesheets/extra.css"]
+extra_css = ["stylesheets/extra.css"]
 extra_javascript = [
   "javascripts/mathjax.js",
+  "javascripts/sidebar-toggle.js",
   "https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"
 ]
 

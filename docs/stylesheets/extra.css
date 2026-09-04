@@ -1,0 +1,215 @@
+/* =========================================
+   1. TYPOGRAPHY & GLOBAL OVERRIDES
+   ========================================= */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&family=Silkscreen&display=swap');
+
+:root {
+  --md-text-font-family: 'Inter', sans-serif;
+  --md-code-font-family: 'JetBrains Mono', monospace;
+}
+
+body, .md-typeset { font-family: var(--md-text-font-family) !important; }
+code, kbd, pre, .md-typeset code, .md-typeset pre { font-family: var(--md-code-font-family) !important; }
+
+/* Nuke Sidebars & Expand Content */
+.md-sidebar { display: none !important; }
+.md-main__inner { display: flex !important; justify-content: center !important; margin-top: 2rem; }
+.md-content { max-width: 1400px !important; width: 95% !important; background: transparent !important; }
+
+/* Apply Silkscreen safely to headings */
+.md-typeset h1, .md-typeset h2, .md-typeset h3, .md-typeset h4, .md-typeset h5, .md-typeset h6 {
+  font-family: 'Silkscreen', cursive !important;
+  letter-spacing: -0.02em;
+  color: var(--md-default-fg-color);
+}
+.hero-pixel { font-size: 3.8rem !important; line-height: 1.1; color: var(--md-default-fg-color) !important; }
+.hero-pixel .text-accent { color: var(--lorex-accent) !important; }
+
+/* =========================================
+   2. FULL-WIDTH TABLES OVERRIDE
+   ========================================= */
+/* Ensure the scroll wrapper allows full expansion */
+.md-typeset__scrollwrap {
+  width: 100% !important;
+  overflow-x: auto;
+}
+
+/* Force the table container to stretch */
+.md-typeset__table {
+  width: 100% !important;
+  min-width: 100% !important;
+}
+
+/* Force the actual table element to 100% */
+.md-typeset table:not([class]) {
+  width: 100% !important;
+  min-width: 100% !important;
+  display: table !important;
+  table-layout: auto !important; /* Lets columns adjust dynamically to text */
+}
+
+/* Add a bit of padding to cells for breathability on wide screens */
+.md-typeset table:not([class]) th,
+.md-typeset table:not([class]) td {
+  padding: 1rem !important;
+}
+
+/* =========================================
+   3. LIGHT & DARK THEMES
+   ========================================= */
+[data-md-color-scheme="default"] {
+  --md-primary-fg-color: #22c55e;
+  --md-default-bg-color: #ffffff;
+  --md-default-fg-color: #111827;
+  --lorex-accent: #22c55e;
+  --lorex-btn-text: #ffffff;
+}
+
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: #4ade80;
+  --md-default-bg-color: #000000;
+  --md-default-fg-color: #f3f4f6;
+  --md-admonition-bg-color: #0a0a0a;
+  --md-code-bg-color: #0a0a0a;
+  --lorex-accent: #4ade80;
+  --lorex-btn-text: #000000;
+}
+
+.md-button { font-family: var(--md-code-font-family) !important; font-weight: 700; border-radius: 4px; }
+.md-button--primary { color: var(--lorex-btn-text) !important; background-color: var(--md-primary-fg-color); border-color: var(--md-primary-fg-color); }
+
+/* =========================================
+   4. HEADER DOCK INTEGRATION (Perfect Snug Fit)
+   ========================================= */
+.lorex-nav-wrapper {
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-left: 1rem;
+}
+
+#lorex-dynamic-nav {
+  display: inline-flex;
+  width: max-content;
+  gap: 0px; /* Kills the flexbox ghost spacing when collapsed */
+  align-items: center;
+  padding: 4px; /* Snug padding around the active button */
+  border-radius: 40px;
+  background: rgba(128, 128, 128, 0.05);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.35s cubic-bezier(0.2, 1, 0.2, 1);
+}
+
+#lorex-dynamic-nav:hover {
+  gap: 6px; /* Bring the gaps back when expanded */
+  padding: 6px 10px; /* Expand the container hit-box */
+  background: rgba(128, 128, 128, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+.nav-item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  border-radius: 28px;
+  text-decoration: none !important;
+  color: #000000 !important;
+  font-family: var(--md-code-font-family) !important;
+  font-weight: 700;
+  font-size: 11.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  
+  /* Glassmorphism */
+  backdrop-filter: blur(10px);
+  
+  /* Collapse completely to 0 to prevent background stretching */
+  width: max-content; 
+  max-width: 0;
+  opacity: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+  transition: max-width 0.35s cubic-bezier(0.2, 1, 0.2, 1), 
+              opacity 0.25s ease, 
+              padding 0.25s ease, 
+              transform 0.25s ease, 
+              filter 0.25s ease;
+}
+
+/* STATE 1: Default Active Capsule */
+#lorex-dynamic-nav:not(:hover) .nav-item.active {
+  max-width: 200px;
+  padding: 0 14px;
+  opacity: 1;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* STATE 2: Hovering dock shrinks active item, reveals dots */
+#lorex-dynamic-nav:hover .nav-item {
+  max-width: 28px;
+  padding: 0 14px;
+  opacity: 1;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+#lorex-dynamic-nav:hover .nav-item .nav-text {
+  opacity: 0;
+}
+
+/* STATE 3: Hovering a specific dot expands it */
+#lorex-dynamic-nav:hover .nav-item:hover {
+  max-width: 250px;
+  padding: 0 16px;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+#lorex-dynamic-nav:hover .nav-item:hover .nav-text {
+  opacity: 1;
+  transition: opacity 0.15s ease 0.1s;
+}
+
+/* STATE 4: Blur out siblings */
+#lorex-dynamic-nav:hover:has(.nav-item:hover) .nav-item:not(:hover) {
+  filter: blur(2px);
+  opacity: 0.35;
+  transform: scale(0.9);
+}
+
+/* =========================================
+   5. MOBILE DOCK & MATRIX HERO
+   ========================================= */
+@media screen and (max-width: 768px) {
+  .lorex-nav-wrapper { display: none; }
+  #lorex-dynamic-nav {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    background: rgba(128, 128, 128, 0.2);
+  }
+}
+
+.hero-matrix {
+  position: relative;
+  /* Top padding reduced and margin cleared to center the text perfectly */
+  padding: 1.5rem 2rem 4rem 2rem; 
+  margin-top: 0; 
+  margin-bottom: 2rem;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(128, 128, 128, 0.1);
+  background: var(--md-default-bg-color);
+}
+.hero-matrix::before {
+  content: ""; position: absolute; top: 0; left: 0; width: 200%; height: 200%; z-index: 0;
+  background-image: radial-gradient(var(--lorex-accent) 1px, transparent 1px);
+  background-size: 24px 24px; opacity: 0.15; animation: matrix-scroll 15s linear infinite;
+}
+.hero-matrix > * { position: relative; z-index: 1; }
+@keyframes matrix-scroll { 0% { background-position: 0 0; } 100% { background-position: -48px -48px; } }

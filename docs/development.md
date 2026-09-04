@@ -56,10 +56,12 @@ LORE-X/
 │   │   ├── retrieval.py       # HybridRetrievalEngine: 4-dimensional scoring
 │   │   └── revision.py        # RevisionEngine: outcome recording, DAG linking
 │   ├── prompts/
+│   │   ├── conflict.jinja2    # Prompt for resolving outcome conflicts
 │   │   └── extraction.jinja2  # Jinja2 prompt template for LLM extraction
 │   └── vcs/
 │       └── local_git.py       # GitLogIngester: async git log, heuristic filter, idempotent dedup
 ├── tests/
+│   ├── benchmark_cases.json   # Deterministic lifecycle questions for evaluate.py
 │   ├── conftest.py            # Sets DATABASE_URL=sqlite:///:memory: for test isolation
 │   ├── test_api.py            # FastAPI TestClient integration tests (5 tests)
 │   ├── test_lorex_core.py     # Unit tests: serialization, cycle detection, metrics, revision (4 tests)
