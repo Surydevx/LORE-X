@@ -42,6 +42,7 @@ def ingest_event(req: EventIngestRequest, session: Session = Depends(get_db)):
     extractor = ExperienceExtractor()
     tup = extractor.extract_from_event(event)
     exp = extractor.persist_experience(tup, req.project_id, session)
+    session.commit()
 
     return {"message": "Event ingested", "experience_id": exp.id}
 

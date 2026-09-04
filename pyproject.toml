@@ -5,6 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "lorex"
 version = "0.1.0"
+requires-python = ">=3.10"
 dependencies = [
     "fastapi",
     "uvicorn",
@@ -12,14 +13,19 @@ dependencies = [
     "sqlalchemy",
     "httpx",
     "jinja2",
-    "optuna",
     "litellm",
     "aiofiles",
-    "orjson>=3.12.0",
+    "python-dotenv",
 ]
 
 [project.scripts]
 lorex = "lorex.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["lorex*"]
+
+[tool.setuptools.package-data]
+lorex = ["prompts/*.jinja2", "api/static/**/*"]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
@@ -28,4 +34,5 @@ testpaths = ["tests"]
 [dependency-groups]
 dev = [
     "pytest>=9.1.1",
+    "optuna",
 ]

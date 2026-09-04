@@ -63,7 +63,7 @@ def test_run_query():
         "content": "Did some work"
     })
     
-    response = client.post("/api/query", json={"query": "test", "top_k": 2})
+    response = client.post("/api/query", json={"query": "work", "top_k": 2})
     assert response.status_code == 200
     assert "results" in response.json()
     assert len(response.json()["results"]) > 0

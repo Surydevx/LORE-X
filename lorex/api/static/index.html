@@ -162,6 +162,19 @@
             }
         }
 
+        function escapeHTML(str) {
+            if (typeof str !== 'string') return str;
+            return str.replace(/[&<>'"]/g, 
+                tag => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    "'": '&#39;',
+                    '"': '&quot;'
+                }[tag] || tag)
+            );
+        }
+
         async function runQuery() {
             const query = document.getElementById('query-input').value;
             if(!query) return;
@@ -175,14 +188,15 @@
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({query: query, top_k: 5})
                 });
+                if (!res.ok) throw new Error('API query failed');
                 const data = await res.json();
                 
                 const resultsDiv = document.getElementById('query-results');
-                resultsDiv.innerHTML = '';
                 
                 if(!data.results || data.results.length === 0) {
                     resultsDiv.innerHTML = '<p class="text-gray-500 text-center py-8">No experiences found for this query.</p>';
                 } else {
+                    let htmlParts = [];
                     data.results.forEach((exp, index) => {
                         let badgeClass = 'border-white/20 text-gray-300 bg-white/5';
                         if(exp.status === 'VERIFIED') badgeClass = 'border-emerald-500 text-emerald-400 bg-emerald-500/10 shadow-[0_0_10px_rgba(16,185,129,0.2)]';
@@ -190,41 +204,51 @@
                         if(exp.status === 'CONDITIONALLY_VALID') badgeClass = 'border-amber-500 text-amber-400 bg-amber-500/10 shadow-[0_0_10px_rgba(245,158,11,0.2)]';
                         if(exp.status === 'SUPERSEDED') badgeClass = 'border-red-500/50 text-red-400 bg-red-500/5 shadow-[0_0_10px_rgba(239,68,68,0.1)]';
                         
-                        resultsDiv.innerHTML += `
+                        const action = escapeHTML(exp.action);
+                        const commitHash = escapeHTML(exp.commit_hash || '');
+                        const author = escapeHTML(exp.author || '');
+                        const problem = escapeHTML(exp.problem);
+                        const conditions = escapeHTML((exp.conditions || []).join(', '));
+                        const outcome = escapeHTML(exp.outcome);
+                        const status = escapeHTML(exp.status);
+                        const evidenceHTML = (exp.evidence || []).map(e => `<span class="inline-flex items-center px-2 py-1 rounded bg-black/50 text-[10px] text-gray-400 border border-white/5 font-mono hover:text-emerald-400 hover:border-emerald-500/30 transition-colors cursor-pointer"><svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>${escapeHTML(e)}</span>`).join('');
+                        
+                        htmlParts.push(`
                             <div class="glass p-8 rounded-2xl transition-all duration-300 ease-in-out hover:-translate-y-1 hover:scale-[1.02] hover:shadow-[0_10px_30px_-10px_rgba(16,185,129,0.3)] animate-fade-in-up" style="opacity: 0; animation-delay: ${index * 0.1}s">
                                 <div class="flex justify-between items-start mb-6">
                                     <div>
-                                        <h3 class="font-bold text-2xl text-white leading-tight tracking-tight mb-3">${exp.action}</h3>
+                                        <h3 class="font-bold text-2xl text-white leading-tight tracking-tight mb-3">${action}</h3>
                                         <div class="flex items-center gap-3">
-                                            ${exp.commit_hash ? `<span class="inline-flex items-center px-2.5 py-1 rounded-md bg-white/5 text-[10px] text-gray-400 border border-white/10 font-mono"><svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>git: ${exp.commit_hash.substring(0,7)}</span>` : ''}
-                                            ${exp.author ? `<span class="text-[11px] text-gray-500 font-medium">${exp.author}</span>` : ''}
-                                            ${exp.timestamp ? `<span class="text-[11px] text-gray-600 font-mono">${new Date(exp.timestamp).toLocaleDateString()}</span>` : ''}
+                                            ${commitHash ? `<span class="inline-flex items-center px-2.5 py-1 rounded-md bg-white/5 text-[10px] text-gray-400 border border-white/10 font-mono"><svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>git: ${commitHash.substring(0,7)}</span>` : ''}
+                                            ${author ? `<span class="text-[11px] text-gray-500 font-medium">${author}</span>` : ''}
+                                            ${exp.timestamp ? `<span class="text-[11px] text-gray-600 font-mono">${escapeHTML(new Date(exp.timestamp).toLocaleDateString())}</span>` : ''}
                                         </div>
                                     </div>
                                     <span class="px-3 py-1 text-xs font-bold rounded-full border ${badgeClass} tracking-widest uppercase font-mono shrink-0 ml-4">
-                                        ${exp.status}
+                                        ${status}
                                     </span>
                                 </div>
                                 <div class="mb-5 bg-black/50 border border-white/5 p-4 rounded-xl shadow-inner">
                                     <span class="block text-xs font-bold text-gray-500 tracking-widest uppercase mb-2 font-mono">Problem</span>
-                                    <p class="text-sm text-gray-300 leading-relaxed">${exp.problem}</p>
+                                    <p class="text-sm text-gray-300 leading-relaxed">${problem}</p>
                                 </div>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div class="bg-white/5 border border-white/5 p-4 rounded-xl">
                                         <span class="block text-xs font-bold text-gray-500 tracking-widest uppercase mb-2 font-mono">Conditions / Scope</span>
-                                        <p class="text-sm text-gray-300 leading-relaxed">${(exp.conditions || []).join(', ')}</p>
+                                        <p class="text-sm text-gray-300 leading-relaxed">${conditions}</p>
                                     </div>
                                     <div class="bg-white/5 border border-white/5 p-4 rounded-xl">
                                         <span class="block text-xs font-bold text-gray-500 tracking-widest uppercase mb-2 font-mono">Outcome & Evidence</span>
-                                        <p class="text-sm text-gray-300 leading-relaxed">${exp.outcome}</p>
+                                        <p class="text-sm text-gray-300 leading-relaxed">${outcome}</p>
                                         <div class="mt-3 flex flex-wrap gap-2">
-                                            ${(exp.evidence || []).map(e => `<span class="inline-flex items-center px-2 py-1 rounded bg-black/50 text-[10px] text-gray-400 border border-white/5 font-mono hover:text-emerald-400 hover:border-emerald-500/30 transition-colors cursor-pointer"><svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>${e}</span>`).join('')}
+                                            ${evidenceHTML}
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        `;
+                        `);
                     });
+                    resultsDiv.innerHTML = htmlParts.join('');
                 }
             } catch(e) {
                 console.error(e);
@@ -236,6 +260,7 @@
         async function loadGraph() {
             try {
                 const res = await fetch('/api/graph');
+                if (!res.ok) throw new Error('API graph failed');
                 const data = await res.json();
                 
                 if (!data.nodes || data.nodes.length === 0) {
@@ -256,6 +281,12 @@
                         </div>
                     `;
                     document.getElementById('graph-container').innerHTML = '';
+                    // Bug 19: Also hide graph empty state or show message for graph-view tab
+                    document.getElementById('graph-container').parentElement.innerHTML = `
+                        <div class="flex flex-col items-center justify-center h-full text-center space-y-4">
+                            <p class="text-gray-500 max-w-sm">Memory Graph is Empty. Have you made a commit yet?</p>
+                        </div>
+                    `;
                     return;
                 }
                 
@@ -270,13 +301,17 @@
                     if(n.data.status === 'FAILED') style = ':::failed';
                     if(n.data.status === 'CONDITIONALLY_VALID') style = ':::cond';
                     
-                    // Sanitize text for mermaid
-                    let actionText = n.data.action.replace(/"/g, "'").substring(0, 30) + "...";
-                    graphDef += `  ${n.id}["[${actionText}]"]${style};\n`;
-                    graphDef += `  click ${n.id} "javascript:showNodeDetails('${n.id}')" "View Details";\n`;
+                    // Sanitize text for mermaid syntax specifically, strip problematic chars
+                    let actionText = escapeHTML(n.data.action || "").replace(/[\[\]\(\)";\n]/g, "").substring(0, 30) + "...";
+                    let safeNodeId = n.id.replace(/-/g, '_'); // Replace hyphens for mermaid ID
+                    graphDef += `  ${safeNodeId}["[${actionText}]"]${style};\n`;
+                    // Use standard click handler syntax instead of javascript: URI
+                    graphDef += `  click ${safeNodeId} call showNodeDetails("${n.id}");\n`;
                 });
                 data.edges.forEach(e => {
-                    graphDef += `  ${e.source} -->|${e.label}| ${e.target};\n`;
+                    let sourceId = e.source.replace(/-/g, '_');
+                    let targetId = e.target.replace(/-/g, '_');
+                    graphDef += `  ${sourceId} -->|${escapeHTML(e.label)}| ${targetId};\n`;
                 });
                 
                 // True dark neon theme colors for mermaid classes
@@ -290,16 +325,22 @@
                 // We must reset the container before rendering again in mermaid
                 graphContainer.removeAttribute('data-processed');
                 graphContainer.innerHTML = graphDef;
-                mermaid.init(undefined, graphContainer);
+                try {
+                    mermaid.init(undefined, graphContainer);
+                } catch(e) {
+                    console.error("Mermaid error:", e);
+                }
                 
                 // Build Timeline
                 const timelineDiv = document.getElementById('timeline');
-                timelineDiv.innerHTML = '';
                 
                 const sortedNodes = data.nodes.sort((a,b) => {
-                    return new Date(a.data.valid_from) - new Date(b.data.valid_from);
+                    const timeA = a.data.valid_from ? new Date(a.data.valid_from).getTime() : 0;
+                    const timeB = b.data.valid_from ? new Date(b.data.valid_from).getTime() : 0;
+                    return timeA - timeB;
                 });
                 
+                let timelineParts = [];
                 sortedNodes.forEach((n, index) => {
                     const isLatest = index === sortedNodes.length - 1;
                     const pulseClass = isLatest ? 'animate-pulse' : '';
@@ -309,9 +350,16 @@
                     if(n.data.status === 'CONDITIONALLY_VALID') dotColor = 'bg-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.8)] border-amber-900';
                     if(n.data.status === 'SUPERSEDED') dotColor = 'bg-red-500 shadow-[0_0_15px_rgba(239,68,68,0.5)] border-red-900';
 
-                    const dateStr = n.data.valid_from ? new Date(n.data.valid_from).toLocaleString() : 'Unknown date';
+                    const dateStr = escapeHTML(n.data.valid_from ? new Date(n.data.valid_from).toLocaleString() : 'Unknown date');
+                    const action = escapeHTML(n.data.action);
+                    const commitHash = escapeHTML(n.data.commit_hash || '');
+                    const author = escapeHTML(n.data.author || '');
+                    const status = escapeHTML(n.data.status);
+                    const problem = escapeHTML(n.data.problem);
+                    const conditions = escapeHTML((n.data.conditions || []).join(', '));
+                    const outcome = escapeHTML(n.data.outcome);
                     
-                    timelineDiv.innerHTML += `
+                    timelineParts.push(`
                         <div class="relative group animate-fade-in-up" style="opacity: 0; animation-delay: ${index * 0.1}s">
                             <div class="absolute -left-[41px] w-4 h-4 rounded-full border-2 z-10 ${dotColor} ${pulseClass}"></div>
                             <div class="pb-10 group-last:pb-0">
@@ -319,35 +367,36 @@
                                 <div class="bg-white/5 backdrop-blur-sm p-6 rounded-2xl border border-white/5 group-hover:bg-white/10 group-hover:border-white/10 transition-all shadow-lg">
                                     <div class="flex justify-between items-start mb-4">
                                         <div>
-                                            <h4 class="font-bold text-white text-lg leading-tight mb-2">${n.data.action}</h4>
+                                            <h4 class="font-bold text-white text-lg leading-tight mb-2">${action}</h4>
                                             <div class="flex items-center gap-3">
-                                                ${n.data.commit_hash ? `<span class="inline-flex items-center px-2 py-0.5 rounded bg-white/5 text-[9px] text-gray-400 border border-white/10 font-mono"><svg class="w-2.5 h-2.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>git: ${n.data.commit_hash.substring(0,7)}</span>` : ''}
-                                                ${n.data.author ? `<span class="text-[10px] text-gray-500 font-medium">${n.data.author}</span>` : ''}
+                                                ${commitHash ? `<span class="inline-flex items-center px-2 py-0.5 rounded bg-white/5 text-[9px] text-gray-400 border border-white/10 font-mono"><svg class="w-2.5 h-2.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>git: ${commitHash.substring(0,7)}</span>` : ''}
+                                                ${author ? `<span class="text-[10px] text-gray-500 font-medium">${author}</span>` : ''}
                                             </div>
                                         </div>
                                         <span class="px-2 py-0.5 text-[9px] font-bold rounded-full border tracking-widest uppercase font-mono shrink-0 ml-3 ${n.data.status === 'VERIFIED' ? 'text-emerald-400 border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] bg-emerald-500/10' : n.data.status === 'SUPERSEDED' ? 'text-red-400 border-red-500/50 shadow-[0_0_8px_rgba(239,68,68,0.3)] bg-red-500/10' : 'text-gray-300 border-white/20'}">
-                                            ${n.data.status}
+                                            ${status}
                                         </span>
                                     </div>
                                     <div class="mb-4 bg-black/50 border border-white/5 p-3 rounded-lg shadow-inner">
                                         <span class="block text-[9px] font-bold text-gray-500 tracking-widest uppercase mb-1 font-mono">Problem</span>
-                                        <p class="text-xs text-gray-300 leading-relaxed">${n.data.problem}</p>
+                                        <p class="text-xs text-gray-300 leading-relaxed">${problem}</p>
                                     </div>
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                                         <div class="bg-white/5 border border-white/5 p-3 rounded-lg">
                                             <span class="block text-[9px] font-bold text-gray-500 tracking-widest uppercase mb-1 font-mono">Conditions / Scope</span>
-                                            <p class="text-[11px] text-gray-400 leading-relaxed">${(n.data.conditions || []).join(', ')}</p>
+                                            <p class="text-[11px] text-gray-400 leading-relaxed">${conditions}</p>
                                         </div>
                                         <div class="bg-white/5 border border-white/5 p-3 rounded-lg">
                                             <span class="block text-[9px] font-bold text-gray-500 tracking-widest uppercase mb-1 font-mono">Outcome & Evidence</span>
-                                            <p class="text-[11px] text-gray-400 leading-relaxed">${n.data.outcome}</p>
+                                            <p class="text-[11px] text-gray-400 leading-relaxed">${outcome}</p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    `;
+                    `);
                 });
+                timelineDiv.innerHTML = timelineParts.join('');
             } catch(e) {
                 console.error("Failed to load graph/timeline:", e);
             }
@@ -355,26 +404,33 @@
         window.showNodeDetails = function(nodeId) {
             const n = window.graphNodes[nodeId];
             if (!n) return;
-            document.getElementById('modalTitle').innerText = n.data.action;
+            const action = escapeHTML(n.data.action);
+            const commitHash = escapeHTML(n.data.commit_hash || '');
+            const author = escapeHTML(n.data.author || '');
+            const status = escapeHTML(n.data.status);
+            const problem = escapeHTML(n.data.problem);
+            const conditions = escapeHTML((n.data.conditions || []).join(', '));
+            const outcome = escapeHTML(n.data.outcome);
             
+            document.getElementById('modalTitle').innerText = action;
             document.getElementById('modalContent').innerHTML = `
                 <div class="flex items-center gap-3 mb-6">
-                    ${n.data.commit_hash ? `<span class="inline-flex items-center px-2 py-0.5 rounded bg-white/5 text-[11px] text-gray-400 border border-white/10 font-mono"><svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>git: ${n.data.commit_hash.substring(0,7)}</span>` : ''}
-                    ${n.data.author ? `<span class="text-xs text-gray-500 font-medium">${n.data.author}</span>` : ''}
-                    <span class="px-2 py-0.5 text-[10px] font-bold rounded-full border border-white/20 tracking-widest uppercase font-mono shrink-0 ml-auto ${n.data.status === 'VERIFIED' ? 'text-emerald-400 border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] bg-emerald-500/10' : n.data.status === 'SUPERSEDED' ? 'text-red-400 border-red-500/50 shadow-[0_0_8px_rgba(239,68,68,0.3)] bg-red-500/10' : 'text-gray-300'}">${n.data.status}</span>
+                    ${commitHash ? `<span class="inline-flex items-center px-2 py-0.5 rounded bg-white/5 text-[11px] text-gray-400 border border-white/10 font-mono"><svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>git: ${commitHash.substring(0,7)}</span>` : ''}
+                    ${author ? `<span class="text-xs text-gray-500 font-medium">${author}</span>` : ''}
+                    <span class="px-2 py-0.5 text-[10px] font-bold rounded-full border border-white/20 tracking-widest uppercase font-mono shrink-0 ml-auto ${n.data.status === 'VERIFIED' ? 'text-emerald-400 border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] bg-emerald-500/10' : n.data.status === 'SUPERSEDED' ? 'text-red-400 border-red-500/50 shadow-[0_0_8px_rgba(239,68,68,0.3)] bg-red-500/10' : 'text-gray-300'}">${status}</span>
                 </div>
                 <div class="mb-4 bg-black/50 border border-white/5 p-4 rounded-xl shadow-inner">
                     <span class="block text-[10px] font-bold text-gray-500 tracking-widest uppercase mb-2 font-mono">Problem</span>
-                    <p class="text-sm text-gray-300 leading-relaxed">${n.data.problem}</p>
+                    <p class="text-sm text-gray-300 leading-relaxed">${problem}</p>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="bg-white/5 border border-white/5 p-4 rounded-xl">
                         <span class="block text-[10px] font-bold text-gray-500 tracking-widest uppercase mb-2 font-mono">Conditions / Scope</span>
-                        <p class="text-sm text-gray-400 leading-relaxed">${(n.data.conditions || []).join(', ')}</p>
+                        <p class="text-sm text-gray-400 leading-relaxed">${conditions}</p>
                     </div>
                     <div class="bg-white/5 border border-white/5 p-4 rounded-xl">
                         <span class="block text-[10px] font-bold text-gray-500 tracking-widest uppercase mb-2 font-mono">Outcome & Evidence</span>
-                        <p class="text-sm text-gray-400 leading-relaxed">${n.data.outcome}</p>
+                        <p class="text-sm text-gray-400 leading-relaxed">${outcome}</p>
                     </div>
                 </div>
             `;

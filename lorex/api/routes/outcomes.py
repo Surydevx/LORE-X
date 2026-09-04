@@ -17,6 +17,7 @@ class APMAlert(BaseModel):
     incident_id: str
     breached_metric: str
     target_node_id: str
+    auth_token: str = ""
 
 @router.post("")
 def record_outcome(req: OutcomeRequest, session: Session = Depends(get_db)):
@@ -39,6 +40,14 @@ def record_outcome(req: OutcomeRequest, session: Session = Depends(get_db)):
 
 @router.post("/apm-webhook")
 def handle_apm_webhook(alert: APMAlert, session: Session = Depends(get_db)):
+    # H13: Verify webhook authenticity via shared secret
+    import os
+    webhook_secret = os.getenv("LOREX_WEBHOOK_SECRET")
+    if webhook_secret and not alert.auth_token:
+        raise HTTPException(status_code=401, detail="Missing auth_token")
+    if webhook_secret and alert.auth_token != webhook_secret:
+        raise HTTPException(status_code=403, detail="Invalid auth_token")
+    
     engine = RevisionEngine()
     
     observed_outcome = f"APM Alert {alert.incident_id}: Breached {alert.breached_metric}"
