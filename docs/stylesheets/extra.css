@@ -183,21 +183,34 @@ code, kbd, pre, .md-typeset code, .md-typeset pre { font-family: var(--md-code-f
 /* =========================================
    5. MOBILE DOCK & MATRIX HERO
    ========================================= */
+/* Hide the native MkDocs hamburger menu on mobile */
+label[for="__drawer"] {
+  display: none !important;
+}
+
 @media screen and (max-width: 768px) {
-  .lorex-nav-wrapper { display: none; }
+  /* Let the wrapper exist, but force it to take up zero space in the header */
+  .lorex-nav-wrapper {
+    width: 0;
+    margin: 0;
+  }
+  
+  /* The dock breaks out of the header and snaps to the bottom */
   #lorex-dynamic-nav {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 9999;
-    background: rgba(128, 128, 128, 0.2);
+    position: fixed !important;
+    top: auto !important;
+    bottom: 20px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    z-index: 9999 !important;
+    background: rgba(128, 128, 128, 0.25) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
   }
 }
 
 .hero-matrix {
   position: relative;
-  /* Top padding reduced and margin cleared to center the text perfectly */
   padding: 1.5rem 2rem 4rem 2rem; 
   margin-top: 0; 
   margin-bottom: 2rem;
