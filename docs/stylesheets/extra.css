@@ -11,12 +11,10 @@
 body, .md-typeset { font-family: var(--md-text-font-family) !important; }
 code, kbd, pre, .md-typeset code, .md-typeset pre { font-family: var(--md-code-font-family) !important; }
 
-/* Nuke Sidebars & Expand Content */
 .md-sidebar { display: none !important; }
 .md-main__inner { display: flex !important; justify-content: center !important; margin-top: 2rem; }
 .md-content { max-width: 1400px !important; width: 95% !important; background: transparent !important; }
 
-/* Apply Silkscreen safely to headings */
 .md-typeset h1, .md-typeset h2, .md-typeset h3, .md-typeset h4, .md-typeset h5, .md-typeset h6 {
   font-family: 'Silkscreen', cursive !important;
   letter-spacing: -0.02em;
@@ -36,14 +34,8 @@ code, kbd, pre, .md-typeset code, .md-typeset pre { font-family: var(--md-code-f
   padding: 0.6rem 1.2rem !important;
 }
 
-.hero-buttons {
-  margin-top: 2rem;
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-}
+.hero-buttons { margin-top: 2rem; display: flex; gap: 1rem; justify-content: center; }
 
-/* Force Bash/Code Commands to wrap */
 .md-typeset pre > code {
   white-space: pre-wrap !important;
   word-break: break-word !important;
@@ -53,25 +45,10 @@ code, kbd, pre, .md-typeset code, .md-typeset pre { font-family: var(--md-code-f
 /* =========================================
    3. FULL-WIDTH TABLES OVERRIDE
    ========================================= */
-.md-typeset__scrollwrap {
-  width: 100% !important;
-  overflow-x: auto !important;
-  -webkit-overflow-scrolling: touch;
-}
-
+.md-typeset__scrollwrap { width: 100% !important; overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
 .md-typeset__table { width: 100% !important; min-width: 100% !important; }
-
-.md-typeset table:not([class]) {
-  width: 100% !important;
-  min-width: 100% !important;
-  display: table !important;
-  table-layout: auto !important;
-}
-
-.md-typeset table:not([class]) th,
-.md-typeset table:not([class]) td {
-  padding: 1rem !important;
-}
+.md-typeset table:not([class]) { width: 100% !important; min-width: 100% !important; display: table !important; table-layout: auto !important; }
+.md-typeset table:not([class]) th, .md-typeset table:not([class]) td { padding: 1rem !important; }
 
 /* =========================================
    4. LIGHT & DARK THEMES
@@ -96,17 +73,20 @@ code, kbd, pre, .md-typeset code, .md-typeset pre { font-family: var(--md-code-f
 .md-button--primary { color: var(--lorex-btn-text) !important; background-color: var(--md-primary-fg-color); border-color: var(--md-primary-fg-color); }
 
 /* =========================================
-   5. HEADER DOCK INTEGRATION (Desktop Physics)
+   5. DESKTOP FLOATING DOCK (Theme Agnostic)
    ========================================= */
-.lorex-nav-wrapper {
-  flex-grow: 1;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  margin-left: 1rem;
-}
+.page-transition { animation: slideFade 0.4s cubic-bezier(0.2, 1, 0.2, 1) forwards; }
+@keyframes slideFade { 0% { opacity: 0; transform: translateY(15px); } 100% { opacity: 1; transform: translateY(0); } }
+
+#lorex-mobile-toggle { display: none; }
+.lorex-nav-wrapper { display: none !important; }
 
 #lorex-dynamic-nav {
+  position: fixed;
+  top: 4px;
+  left: 27%;
+  transform: translateX(-50%);
+  z-index: 99999;
   display: inline-flex;
   width: max-content;
   gap: 0px; 
@@ -118,30 +98,25 @@ code, kbd, pre, .md-typeset code, .md-typeset pre { font-family: var(--md-code-f
   -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.05);
   transition: all 0.35s cubic-bezier(0.2, 1, 0.2, 1);
-}
-
-#lorex-dynamic-nav:hover {
-  gap: 6px; 
-  padding: 6px 10px; 
-  background: rgba(128, 128, 128, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
 .nav-item {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  gap: 8px;
   height: 28px;
   border-radius: 28px;
   text-decoration: none !important;
-  color: #000000 !important;
+  color: var(--md-default-fg-color, #000) !important;
   font-family: var(--md-code-font-family) !important;
   font-weight: 700;
   font-size: 11.5px;
   white-space: nowrap;
   overflow: hidden;
   backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   width: max-content; 
   max-width: 0;
   opacity: 0;
@@ -153,71 +128,134 @@ code, kbd, pre, .md-typeset code, .md-typeset pre { font-family: var(--md-code-f
               transform 0.25s ease, filter 0.25s ease;
 }
 
-#lorex-dynamic-nav:not(:hover) .nav-item.active { max-width: 200px; padding: 0 14px; opacity: 1; border: 1px solid rgba(255, 255, 255, 0.2); }
-#lorex-dynamic-nav:hover .nav-item { max-width: 28px; padding: 0 14px; opacity: 1; border: 1px solid rgba(255, 255, 255, 0.2); }
-#lorex-dynamic-nav:hover .nav-item .nav-text { opacity: 0; }
-#lorex-dynamic-nav:hover .nav-item:hover { max-width: 250px; padding: 0 16px; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.3); }
-#lorex-dynamic-nav:hover .nav-item:hover .nav-text { opacity: 1; transition: opacity 0.15s ease 0.1s; }
-#lorex-dynamic-nav:hover:has(.nav-item:hover) .nav-item:not(:hover) { filter: blur(2px); opacity: 0.35; transform: scale(0.9); }
+.nav-icon { display: flex; align-items: center; justify-content: center; min-width: 14px; }
+
+/* Desktop Hover Physics (Isolated from Mobile) */
+@media screen and (min-width: 769px) {
+  #lorex-dynamic-nav:hover {
+    gap: 6px; 
+    padding: 6px 10px; 
+    background: rgba(128, 128, 128, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  }
+
+  /* CSS Failsafe Active State */
+  #lorex-dynamic-nav:not(:hover) .nav-item.active,
+  #lorex-dynamic-nav:not(:hover):not(:has(.active)) .nav-item:first-child { 
+    max-width: 200px; padding: 0 12px; opacity: 1; border: 1px solid rgba(255, 255, 255, 0.2); 
+  }
+
+  #lorex-dynamic-nav:hover .nav-item { max-width: 28px; padding: 0 7px; opacity: 1; border: 1px solid rgba(255, 255, 255, 0.2); }
+  #lorex-dynamic-nav:hover .nav-item .nav-text { opacity: 0; }
+  #lorex-dynamic-nav:hover .nav-item:hover { max-width: 250px; padding: 0 14px; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.3); }
+  #lorex-dynamic-nav:hover .nav-item:hover .nav-text { opacity: 1; transition: opacity 0.15s ease 0.1s; }
+  #lorex-dynamic-nav:hover:has(.nav-item:hover) .nav-item:not(:hover) { filter: blur(2px); opacity: 0.35; transform: scale(0.9); }
+}
 
 /* =========================================
-   6. MOBILE RESPONSIVENESS & STATIC DOCK
+   6. DYNAMIC CAPSULE MOBILE DOCK (Dynamic Island Style)
    ========================================= */
 label[for="__drawer"] { display: none !important; }
 
 @media screen and (max-width: 768px) {
   .hero-pixel { font-size: 1.8rem !important; line-height: 1.3 !important; }
   .hero-subtitle { font-size: 0.95rem !important; padding: 0 1rem; }
-  .lorex-nav-wrapper { display: none !important; }
-  
-  /* Fix squished buttons */
   .hero-buttons { flex-direction: column; align-items: center; width: 100%; }
   .hero-buttons .md-button { width: 100%; max-width: 260px; text-align: center; }
-  
-  /* Fix table swiping */
   .md-typeset table:not([class]) { display: block !important; overflow-x: auto !important; white-space: nowrap !important; }
 
-  /* Static Mobile Dock (No hover glitches) */
+  /* Base Mobile Dock Container */
   #lorex-dynamic-nav {
     position: fixed !important;
     top: auto !important;
     bottom: 25px !important;
-    left: 50% !important;
+    left: 60% !important;
+    right: auto !important;
     transform: translateX(-50%) !important;
     z-index: 99999 !important;
+    
     background: rgba(128, 128, 128, 0.25) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
     border: 1px solid rgba(255, 255, 255, 0.15) !important;
     box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
+    
+    flex-direction: row !important; 
+    align-items: center !important;
+    gap: 0 !important; /* Starts fully crushed together */
+    padding: 6px !important;
     width: max-content !important;
-    max-width: 90vw !important;
-    display: flex !important;
-    gap: 8px !important;
-    padding: 8px 12px !important;
+    max-width: 95vw !important;
+    border-radius: 40px !important;
     overflow-x: auto !important;
+    transition: gap 0.35s cubic-bezier(0.2, 1, 0.2, 1), padding 0.35s ease !important;
   }
-  #lorex-dynamic-nav .nav-item { max-width: 32px !important; width: 32px !important; padding: 0 !important; opacity: 1 !important; }
-  #lorex-dynamic-nav .nav-item .nav-text { display: none !important; }
-  #lorex-dynamic-nav .nav-item.active { max-width: 150px !important; width: max-content !important; padding: 0 12px !important; }
-  #lorex-dynamic-nav .nav-item.active .nav-text { display: inline-block !important; opacity: 1 !important; }
+  
+  #lorex-dynamic-nav::-webkit-scrollbar { display: none; }
+  #lorex-dynamic-nav { -ms-overflow-style: none; scrollbar-width: none; }
 
-  /* Nuke all hover physics on mobile */
-  #lorex-dynamic-nav:hover .nav-item { max-width: 32px !important; padding: 0 !important; }
-  #lorex-dynamic-nav:hover .nav-item.active { max-width: 150px !important; padding: 0 12px !important; }
+  /* 1. COLLAPSED STATE: Hide all inactive items */
+  #lorex-dynamic-nav .nav-item:not(.active) {
+    max-height: 32px !important; height: 32px !important;
+    max-width: 0 !important; width: 0 !important;
+    margin: 0 !important; padding: 0 !important;
+    opacity: 0 !important; pointer-events: none !important; /* Invisible */
+    border: 0px solid transparent !important;
+    display: flex !important; justify-content: center !important;
+    transition: all 0.35s cubic-bezier(0.2, 1, 0.2, 1) !important;
+  }
+  #lorex-dynamic-nav .nav-item:not(.active) .nav-text { display: none !important; }
+
+  /* 2. COLLAPSED STATE: The Active Pill (GHOST BUG FIXED HERE) */
+  #lorex-dynamic-nav .nav-item.active {
+    display: flex !important;
+    opacity: 1 !important; /* Forces it to be visible */
+    max-width: 200px !important; width: max-content !important;
+    height: 32px !important; padding: 0 16px !important;
+    justify-content: flex-start !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    pointer-events: auto !important;
+    transition: all 0.35s cubic-bezier(0.2, 1, 0.2, 1) !important;
+  }
+  #lorex-dynamic-nav .nav-item.active .nav-text {
+    display: inline-block !important; opacity: 1 !important;
+    transition: opacity 0.2s ease !important;
+  }
+
+  /* 3. EXPANDED STATE: Triggered by Tapping */
+  #lorex-dynamic-nav.expanded {
+    gap: 8px !important; /* Spreads the dots out */
+  }
+
+  /* Reveal inactive items as dots */
+  #lorex-dynamic-nav.expanded .nav-item:not(.active) {
+    max-width: 32px !important; width: 32px !important;
+    opacity: 1 !important; pointer-events: auto !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 32px !important;
+  }
+
+  /* Shrink the active pill into a dot to match the rest! */
+  #lorex-dynamic-nav.expanded .nav-item.active {
+    max-width: 32px !important; width: 32px !important;
+    padding: 0 !important; justify-content: center !important;
+  }
+  #lorex-dynamic-nav.expanded .nav-item.active .nav-text {
+    opacity: 0 !important; display: none !important;
+  }
+
+  /* Nuke Desktop Hover Physics */
   #lorex-dynamic-nav:hover .nav-item:hover { transform: none !important; box-shadow: none !important; }
-  #lorex-dynamic-nav:hover:has(.nav-item:hover) .nav-item:not(:hover) { filter: none !important; opacity: 1 !important; }
+  #lorex-dynamic-nav:hover:has(.nav-item:hover) .nav-item:not(:hover) { filter: none !important; opacity: 1 !important; transform: none !important; }
 }
 
 /* =========================================
    7. MATRIX HERO BACKGROUND
    ========================================= */
 .hero-matrix {
-  position: relative;
-  padding: 1.5rem 2rem 4rem 2rem; 
-  margin-top: 0; 
-  margin-bottom: 2rem;
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid rgba(128, 128, 128, 0.1);
+  position: relative; padding: 1.5rem 2rem 4rem 2rem; margin-top: 0; margin-bottom: 2rem;
+  border-radius: 12px; overflow: hidden; border: 1px solid rgba(128, 128, 128, 0.1);
   background: var(--md-default-bg-color);
 }
 .hero-matrix::before {
