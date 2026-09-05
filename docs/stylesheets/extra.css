@@ -170,7 +170,7 @@ label[for="__drawer"] { display: none !important; }
     position: fixed !important;
     top: auto !important;
     bottom: 25px !important;
-    left: 60% !important;
+    left: 65% !important;
     right: auto !important;
     transform: translateX(-50%) !important;
     z-index: 99999 !important;
